@@ -990,16 +990,16 @@
         }
         
         // 頁面切換
-        function openPage(page) {
+        window.openPage = function(page) {
             document.getElementById('app-main').classList.remove('active');
             document.getElementById('page-' + page).classList.add('active');
             
-            if (page === 'picking') loadPickingWaves();
-            if (page === 'inbound') loadInboundTasks();
-            if (page === 'dispatch') loadDispatchOrders();
+            if (page === 'picking') window.loadPickingWaves();
+            if (page === 'inbound') window.loadInboundTasks();
+            if (page === 'dispatch') window.loadDispatchOrders();
         }
         
-        function goBack() {
+        window.goBack = function() {
             document.querySelectorAll('.func-page').forEach(p => p.classList.remove('active'));
             document.getElementById('app-main').classList.add('active');
         }
@@ -1008,7 +1008,7 @@
         let currentWave = null;
         let pickingItems = [];
         
-        function loadPickingWaves() {
+        window.loadPickingWaves = function() {
             const waves = window.waves || [];
             const select = document.getElementById('picking-wave-select');
             select.innerHTML = '<option value="">-- 請選擇 --</option>';
@@ -1291,7 +1291,7 @@
         
         // ========== 入庫任務 ==========
         
-        function loadInboundTasks() {
+        window.loadInboundTasks = function() {
             const tasks = (window.inboundTasks || []).filter(t => t.status !== 'done');
             
             document.getElementById('inbound-count').innerText = tasks.length + ' 筆待入庫';
@@ -1367,7 +1367,7 @@
         let currentDispatch = null;
         let dispatchItems = [];
         
-        function loadDispatchOrders() {
+        window.loadDispatchOrders = function() {
             const orders = (window.dispatchOrders || []).filter(o => o.status !== 'done');
             
             const select = document.getElementById('dispatch-order-select');
