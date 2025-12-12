@@ -514,7 +514,7 @@
             <input type="email" id="login-email" class="login-input" placeholder="Email" value="admin@bafang.com">
             <input type="password" id="login-pwd" class="login-input" placeholder="密碼" value="123456">
             <div id="login-error" class="login-error"></div>
-            <button onclick="doLogin()" class="login-btn">
+            <button class="login-btn">
                 <i class="fa-solid fa-right-to-bracket"></i> 登入
             </button>
         </div>
@@ -529,14 +529,14 @@
             </div>
             <div class="user-info">
                 <span class="user-name" id="display-user">-</span>
-                <button onclick="doLogout()" class="logout-btn">
+                <button class="logout-btn">
                     <i class="fa-solid fa-power-off"></i>
                 </button>
             </div>
         </header>
         
         <div class="main-menu">
-            <div class="menu-card picking" onclick="openPage('picking')">
+            <div class="menu-card picking" data-page="picking">
                 <div class="menu-icon">
                     <i class="fa-solid fa-barcode"></i>
                     <span class="menu-badge" id="badge-picking" style="display:none">0</span>
@@ -548,7 +548,7 @@
                 <i class="fa-solid fa-chevron-right menu-arrow"></i>
             </div>
             
-            <div class="menu-card inbound" onclick="openPage('inbound')">
+            <div class="menu-card inbound" data-page="inbound">
                 <div class="menu-icon">
                     <i class="fa-solid fa-boxes-stacked"></i>
                     <span class="menu-badge" id="badge-inbound" style="display:none">0</span>
@@ -560,7 +560,7 @@
                 <i class="fa-solid fa-chevron-right menu-arrow"></i>
             </div>
             
-            <div class="menu-card dispatch" onclick="openPage('dispatch')">
+            <div class="menu-card dispatch" data-page="dispatch">
                 <div class="menu-icon">
                     <i class="fa-solid fa-truck-moving"></i>
                     <span class="menu-badge" id="badge-dispatch" style="display:none">0</span>
@@ -572,7 +572,7 @@
                 <i class="fa-solid fa-chevron-right menu-arrow"></i>
             </div>
             
-            <div class="menu-card query" onclick="openPage('query')">
+            <div class="menu-card query" data-page="query">
                 <div class="menu-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
                 <div class="menu-text">
                     <h3>庫存快查</h3>
@@ -586,13 +586,13 @@
     <!-- 揀貨掃描頁 -->
     <div id="page-picking" class="func-page">
         <header class="func-header">
-            <button class="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+            <button class="back-btn" ><i class="fa-solid fa-arrow-left"></i></button>
             <span class="func-title">揀貨掃描</span>
         </header>
         
         <div class="selector-section">
             <div class="selector-label">選擇波次</div>
-            <select id="picking-wave-select" class="selector-input" onchange="loadPickingWave()">
+            <select id="picking-wave-select" class="selector-input" >
                 <option value="">-- 請選擇 --</option>
             </select>
         </div>
@@ -624,7 +624,7 @@
             <div class="task-scan-area">
                 <div class="scan-input-wrap">
                     <input type="text" id="picking-scan" class="scan-input" placeholder="掃描儲位或板號確認">
-                    <button class="scan-btn" onclick="confirmPickingScan()"><i class="fa-solid fa-check"></i></button>
+                    <button class="scan-btn" ><i class="fa-solid fa-check"></i></button>
                 </div>
                 <div id="picking-scan-result" class="scan-result"></div>
             </div>
@@ -658,7 +658,7 @@
         </div>
         
         <div class="bottom-actions" id="picking-actions" style="display:none">
-            <button class="action-btn success" onclick="completePickingWave()">
+            <button class="action-btn success" >
                 <i class="fa-solid fa-flag-checkered"></i> 完成波次
             </button>
         </div>
@@ -667,14 +667,14 @@
     <!-- 入庫確認頁 -->
     <div id="page-inbound" class="func-page">
         <header class="func-header">
-            <button class="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+            <button class="back-btn" ><i class="fa-solid fa-arrow-left"></i></button>
             <span class="func-title">入庫確認</span>
         </header>
         
         <div class="scan-section">
             <div class="scan-input-wrap">
                 <input type="text" id="inbound-scan" class="scan-input" placeholder="掃描入庫板號">
-                <button class="scan-btn" onclick="confirmInboundScan()"><i class="fa-solid fa-check"></i></button>
+                <button class="scan-btn" ><i class="fa-solid fa-check"></i></button>
             </div>
             <p class="scan-hint">掃描板號確認實際入庫</p>
             <div id="inbound-scan-result" class="scan-result"></div>
@@ -694,13 +694,13 @@
     <!-- 調度執行頁 -->
     <div id="page-dispatch" class="func-page">
         <header class="func-header">
-            <button class="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+            <button class="back-btn" ><i class="fa-solid fa-arrow-left"></i></button>
             <span class="func-title">調度執行</span>
         </header>
         
         <div class="selector-section">
             <div class="selector-label">選擇工單</div>
-            <select id="dispatch-order-select" class="selector-input" onchange="loadDispatchOrder()">
+            <select id="dispatch-order-select" class="selector-input" >
                 <option value="">-- 請選擇 --</option>
             </select>
         </div>
@@ -734,7 +734,7 @@
             <div class="task-scan-area">
                 <div class="scan-input-wrap">
                     <input type="text" id="dispatch-scan" class="scan-input" placeholder="掃描來源板號確認">
-                    <button class="scan-btn" onclick="confirmDispatchScan()"><i class="fa-solid fa-check"></i></button>
+                    <button class="scan-btn" ><i class="fa-solid fa-check"></i></button>
                 </div>
                 <div id="dispatch-scan-result" class="scan-result"></div>
             </div>
@@ -762,7 +762,7 @@
         </div>
         
         <div class="bottom-actions" id="dispatch-actions" style="display:none">
-            <button class="action-btn success" onclick="completeDispatchOrder()">
+            <button class="action-btn success" >
                 <i class="fa-solid fa-flag-checkered"></i> 完成工單
             </button>
         </div>
@@ -771,14 +771,14 @@
     <!-- 庫存快查頁 -->
     <div id="page-query" class="func-page">
         <header class="func-header">
-            <button class="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+            <button class="back-btn" ><i class="fa-solid fa-arrow-left"></i></button>
             <span class="func-title">庫存快查</span>
         </header>
         
         <div class="scan-section">
             <div class="scan-input-wrap">
                 <input type="text" id="query-input" class="scan-input" placeholder="輸入品名或板號">
-                <button class="scan-btn" onclick="doInventoryQuery()"><i class="fa-solid fa-search"></i></button>
+                <button class="scan-btn" ><i class="fa-solid fa-search"></i></button>
             </div>
             <p class="scan-hint">支援模糊搜尋</p>
         </div>
@@ -1623,6 +1623,66 @@
                 if (active.id === 'dispatch-scan') confirmDispatchScan();
                 if (active.id === 'query-input') doInventoryQuery();
             }
+        });
+        
+        // ========== 綁定所有按鈕事件 ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            // 功能卡片點擊
+            document.querySelectorAll('.menu-card[data-page]').forEach(function(card) {
+                card.addEventListener('click', function() {
+                    const page = this.dataset.page;
+                    window.openPage(page);
+                });
+            });
+            
+            // 返回按鈕
+            document.querySelectorAll('.back-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    window.goBack();
+                });
+            });
+            
+            // 登入按鈕
+            const loginBtn = document.querySelector('.login-btn');
+            if (loginBtn) loginBtn.addEventListener('click', window.doLogin);
+            
+            // 登出按鈕
+            const logoutBtn = document.querySelector('.logout-btn');
+            if (logoutBtn) logoutBtn.addEventListener('click', window.doLogout);
+            
+            // 揀貨確認按鈕
+            const pickingScanBtn = document.querySelector('#page-picking .scan-btn');
+            if (pickingScanBtn) pickingScanBtn.addEventListener('click', window.confirmPickingScan);
+            
+            // 完成波次按鈕
+            const completeWaveBtn = document.querySelector('#page-picking .action-btn');
+            if (completeWaveBtn) completeWaveBtn.addEventListener('click', window.completePickingWave);
+            
+            // 入庫確認按鈕
+            const inboundScanBtn = document.querySelector('#page-inbound .scan-btn');
+            if (inboundScanBtn) inboundScanBtn.addEventListener('click', window.confirmInboundScan);
+            
+            // 調度確認按鈕
+            const dispatchScanBtn = document.querySelector('#page-dispatch .scan-btn');
+            if (dispatchScanBtn) dispatchScanBtn.addEventListener('click', window.confirmDispatchScan);
+            
+            // 完成調度按鈕
+            const completeDispatchBtn = document.querySelector('#page-dispatch .action-btn');
+            if (completeDispatchBtn) completeDispatchBtn.addEventListener('click', window.completeDispatchOrder);
+            
+            // 庫存查詢按鈕
+            const queryBtn = document.querySelector('#page-query .scan-btn');
+            if (queryBtn) queryBtn.addEventListener('click', window.doInventoryQuery);
+            
+            // 波次選擇下拉
+            const waveSelect = document.getElementById('picking-wave-select');
+            if (waveSelect) waveSelect.addEventListener('change', window.loadPickingWave);
+            
+            // 調度工單選擇下拉
+            const dispatchSelect = document.getElementById('dispatch-order-select');
+            if (dispatchSelect) dispatchSelect.addEventListener('change', window.loadDispatchOrder);
+            
+            console.log('所有按鈕事件已綁定');
         });
     </script>
 </body>
