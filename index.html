@@ -322,6 +322,166 @@
         .action-btn.secondary { background: #334155; color: #fff; }
         .action-btn:active { opacity: 0.8; }
         
+        /* 當前任務指令卡 */
+        .current-task-card {
+            margin: 12px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+            border: 2px solid #3b82f6;
+            border-radius: 16px;
+            padding: 16px;
+            position: relative;
+        }
+        .task-step-badge {
+            position: absolute;
+            top: -10px;
+            left: 16px;
+            background: #3b82f6;
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+        .task-type-badge {
+            position: absolute;
+            top: -10px;
+            right: 16px;
+            background: #f97316;
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+        .task-type-badge.move { background: #3b82f6; }
+        .task-instruction {
+            margin-top: 12px;
+        }
+        .task-from, .task-to {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+        .task-from { border: 2px solid #ef4444; }
+        .task-to { border: 2px solid #10b981; }
+        .task-label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+        .task-location {
+            font-size: 28px;
+            font-weight: bold;
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+        .task-from .task-location { color: #f87171; }
+        .task-to .task-location { color: #34d399; }
+        .task-pallet {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+            font-family: monospace;
+        }
+        .task-hint {
+            font-size: 12px;
+            color: #10b981;
+            margin-top: 4px;
+        }
+        .task-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 0;
+            color: #64748b;
+        }
+        .task-arrow i { font-size: 24px; }
+        .task-qty {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fbbf24;
+            margin-top: 4px;
+        }
+        .task-scan-area {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #334155;
+        }
+        
+        /* 全部完成卡 */
+        .all-done-card {
+            margin: 12px;
+            background: linear-gradient(135deg, #065f46 0%, #0f172a 100%);
+            border: 2px solid #10b981;
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+        }
+        .done-icon { font-size: 64px; margin-bottom: 16px; }
+        .done-title { font-size: 24px; font-weight: bold; color: #34d399; margin-bottom: 8px; }
+        .done-subtitle { font-size: 14px; color: #94a3b8; }
+        
+        /* 任務列表項目 */
+        .list-item.current {
+            background: linear-gradient(90deg, #1e3a5f, #1e293b);
+            border-left: 4px solid #3b82f6;
+        }
+        .step-num {
+            display: inline-flex;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+        .step-num.pending { background: #334155; color: #94a3b8; }
+        .step-num.current { background: #3b82f6; color: #fff; }
+        .step-num.done { background: #10b981; color: #fff; }
+        .item-arrow { color: #64748b; margin: 0 8px; }
+        .item-location.to { color: #34d399; }
+        .item-row.sub { margin-top: 4px; padding-left: 32px; }
+        
+        /* 揀貨產品資訊 */
+        .pick-product-info {
+            background: linear-gradient(135deg, #292524, #1c1917);
+            border: 2px solid #fbbf24;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 12px 0;
+            text-align: center;
+        }
+        .pick-product-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #fbbf24;
+            margin-bottom: 4px;
+        }
+        .pick-product-qty {
+            font-size: 28px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .pick-product-qty span { color: #fbbf24; }
+        
+        /* 缺貨提示卡 */
+        .shortage-card {
+            margin: 12px;
+            background: linear-gradient(135deg, #7f1d1d 0%, #0f172a 100%);
+            border: 2px solid #ef4444;
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+        }
+        .shortage-icon { font-size: 32px; margin-bottom: 8px; }
+        .shortage-title { font-size: 16px; font-weight: bold; color: #fca5a5; margin-bottom: 12px; }
+        .shortage-list { font-size: 12px; color: #fca5a5; text-align: left; }
+        .shortage-item { padding: 4px 0; border-bottom: 1px solid #7f1d1d; }
+        
         /* 空狀態 */
         .empty-state {
             text-align: center;
@@ -437,13 +597,51 @@
             </select>
         </div>
         
-        <div class="scan-section" id="picking-scan-area" style="display:none">
-            <div class="scan-input-wrap">
-                <input type="text" id="picking-scan" class="scan-input" placeholder="掃描儲位或板號">
-                <button class="scan-btn" onclick="confirmPickingScan()"><i class="fa-solid fa-check"></i></button>
+        <!-- 當前揀貨任務卡 -->
+        <div id="picking-task-card" class="current-task-card" style="display:none; border-color: #f97316;">
+            <div class="task-step-badge" style="background:#f97316;">
+                <span id="pick-step-num">1</span> / <span id="pick-step-total">5</span>
             </div>
-            <p class="scan-hint">掃描後自動確認揀貨</p>
-            <div id="picking-scan-result" class="scan-result"></div>
+            
+            <div class="task-instruction">
+                <div class="task-from" style="border-color: #f97316;">
+                    <div class="task-label">📍 前往儲位取貨</div>
+                    <div class="task-location" style="color: #fb923c;" id="pick-location">I-A-05-2F</div>
+                    <div class="task-pallet" id="pick-pallet">板號: IN-20241212-001</div>
+                </div>
+                
+                <div class="pick-product-info">
+                    <div class="pick-product-name" id="pick-product">冷凍水餃</div>
+                    <div class="pick-product-qty">取 <span id="pick-qty">45</span> 件</div>
+                </div>
+                
+                <div class="task-to" style="border-color: #8b5cf6;">
+                    <div class="task-label">🛒 放入訂單</div>
+                    <div class="task-location" style="color: #a78bfa; font-size: 18px;" id="pick-customer">客戶A - 訂單001</div>
+                </div>
+            </div>
+            
+            <div class="task-scan-area">
+                <div class="scan-input-wrap">
+                    <input type="text" id="picking-scan" class="scan-input" placeholder="掃描儲位或板號確認">
+                    <button class="scan-btn" onclick="confirmPickingScan()"><i class="fa-solid fa-check"></i></button>
+                </div>
+                <div id="picking-scan-result" class="scan-result"></div>
+            </div>
+        </div>
+        
+        <!-- 全部完成卡 -->
+        <div id="picking-done-card" class="all-done-card" style="display:none; border-color: #f97316;">
+            <div class="done-icon">📦</div>
+            <div class="done-title" style="color: #fb923c;">揀貨完成！</div>
+            <div class="done-subtitle" id="picking-done-summary">已完成 5 項揀貨任務</div>
+        </div>
+        
+        <!-- 缺貨提示 -->
+        <div id="picking-shortage-card" class="shortage-card" style="display:none">
+            <div class="shortage-icon">⚠️</div>
+            <div class="shortage-title">有 <span id="shortage-count">0</span> 項缺貨</div>
+            <div class="shortage-list" id="shortage-list"></div>
         </div>
         
         <div class="list-section" id="picking-list-area">
@@ -507,18 +705,52 @@
             </select>
         </div>
         
-        <div class="scan-section" id="dispatch-scan-area" style="display:none">
-            <div class="scan-input-wrap">
-                <input type="text" id="dispatch-scan" class="scan-input" placeholder="掃描板號確認">
-                <button class="scan-btn" onclick="confirmDispatchScan()"><i class="fa-solid fa-check"></i></button>
+        <!-- 當前任務指令卡 -->
+        <div id="current-task-card" class="current-task-card" style="display:none">
+            <div class="task-step-badge">
+                <span id="task-step-num">1</span> / <span id="task-step-total">5</span>
             </div>
-            <p class="scan-hint">掃描板號確認執行</p>
-            <div id="dispatch-scan-result" class="scan-result"></div>
+            <div class="task-type-badge" id="task-type-badge">合併</div>
+            
+            <div class="task-instruction">
+                <div class="task-from">
+                    <div class="task-label">📍 前往取貨</div>
+                    <div class="task-location" id="task-from-loc">I-A-05-2F</div>
+                    <div class="task-pallet" id="task-from-pallet">板號: IN-20241212-001</div>
+                </div>
+                
+                <div class="task-arrow">
+                    <i class="fa-solid fa-arrow-down"></i>
+                    <span class="task-qty" id="task-qty">45 件</span>
+                </div>
+                
+                <div class="task-to">
+                    <div class="task-label">🎯 送達目標</div>
+                    <div class="task-location" id="task-to-loc">I-A-03-1F</div>
+                    <div class="task-hint" id="task-hint">合併至此板</div>
+                </div>
+            </div>
+            
+            <div class="task-scan-area">
+                <div class="scan-input-wrap">
+                    <input type="text" id="dispatch-scan" class="scan-input" placeholder="掃描來源板號確認">
+                    <button class="scan-btn" onclick="confirmDispatchScan()"><i class="fa-solid fa-check"></i></button>
+                </div>
+                <div id="dispatch-scan-result" class="scan-result"></div>
+            </div>
         </div>
         
+        <!-- 全部完成卡 -->
+        <div id="all-done-card" class="all-done-card" style="display:none">
+            <div class="done-icon">🎉</div>
+            <div class="done-title">工單完成！</div>
+            <div class="done-subtitle" id="done-summary">已完成 5 項調度任務</div>
+        </div>
+        
+        <!-- 任務列表（縮小版） -->
         <div class="list-section" id="dispatch-list-area">
             <div class="list-header">
-                <h4>調度清單</h4>
+                <h4>任務列表</h4>
                 <span class="list-progress" id="dispatch-progress">0/0</span>
             </div>
             <div id="dispatch-list">
@@ -789,8 +1021,11 @@
         window.loadPickingWave = function() {
             const waveId = document.getElementById('picking-wave-select').value;
             if (!waveId) {
-                document.getElementById('picking-scan-area').style.display = 'none';
+                document.getElementById('picking-task-card').style.display = 'none';
+                document.getElementById('picking-done-card').style.display = 'none';
+                document.getElementById('picking-shortage-card').style.display = 'none';
                 document.getElementById('picking-actions').style.display = 'none';
+                document.getElementById('picking-list').innerHTML = '<div class="empty-state"><i class="fa-solid fa-clipboard-list"></i><p>請先選擇波次</p></div>';
                 return;
             }
             
@@ -800,6 +1035,7 @@
             
             // 產生揀貨清單
             pickingItems = [];
+            let stepNum = 0;
             (currentWave.orders || []).forEach(order => {
                 let needed = parseInt(order.quantity) || 0;
                 const matching = window.pallets.filter(p => p.productName === order.productName)
@@ -808,6 +1044,7 @@
                 matching.forEach(p => {
                     if (needed <= 0) return;
                     const pick = Math.min(p.quantity, needed);
+                    stepNum++;
                     pickingItems.push({
                         id: p.palletId + '-' + order.id,
                         palletId: p.palletId,
@@ -816,7 +1053,9 @@
                         pickQty: pick,
                         orderNo: order.orderNo,
                         customer: order.customer,
-                        completed: false
+                        stepNum: stepNum,
+                        completed: false,
+                        shortage: false
                     });
                     needed -= pick;
                 });
@@ -827,7 +1066,10 @@
                         locationId: '庫存不足',
                         productName: order.productName,
                         pickQty: needed,
-                        shortage: true
+                        orderNo: order.orderNo,
+                        customer: order.customer,
+                        shortage: true,
+                        completed: false
                     });
                 }
             });
@@ -838,15 +1080,86 @@
                 if (completed.includes(item.id)) item.completed = true;
             });
             
+            // 按儲位排序（非缺貨的）
+            pickingItems.sort((a, b) => {
+                if (a.shortage && !b.shortage) return 1;
+                if (!a.shortage && b.shortage) return -1;
+                return (a.locationId || '').localeCompare(b.locationId || '');
+            });
+            
+            // 重新編號
+            let num = 0;
+            pickingItems.forEach(item => {
+                if (!item.shortage) {
+                    num++;
+                    item.stepNum = num;
+                }
+            });
+            
             renderPickingList();
-            document.getElementById('picking-scan-area').style.display = 'block';
+            renderCurrentPickingTask();
             document.getElementById('picking-actions').style.display = 'block';
-            document.getElementById('picking-scan').focus();
         };
+        
+        // 渲染當前揀貨任務
+        function renderCurrentPickingTask() {
+            const card = document.getElementById('picking-task-card');
+            const doneCard = document.getElementById('picking-done-card');
+            const shortageCard = document.getElementById('picking-shortage-card');
+            
+            // 找第一個未完成的非缺貨任務
+            const nextTask = pickingItems.find(i => !i.completed && !i.shortage);
+            const completed = pickingItems.filter(i => i.completed && !i.shortage).length;
+            const total = pickingItems.filter(i => !i.shortage).length;
+            const shortages = pickingItems.filter(i => i.shortage);
+            
+            // 顯示缺貨提示
+            if (shortages.length > 0) {
+                shortageCard.style.display = 'block';
+                document.getElementById('shortage-count').innerText = shortages.length;
+                document.getElementById('shortage-list').innerHTML = shortages.map(s => 
+                    `<div class="shortage-item">${s.productName}: 缺 ${s.pickQty} 件 (${s.customer || s.orderNo})</div>`
+                ).join('');
+            } else {
+                shortageCard.style.display = 'none';
+            }
+            
+            if (!nextTask) {
+                // 全部完成
+                card.style.display = 'none';
+                doneCard.style.display = 'block';
+                document.getElementById('picking-done-summary').innerText = '已完成 ' + total + ' 項揀貨任務';
+                return;
+            }
+            
+            // 顯示當前任務
+            card.style.display = 'block';
+            doneCard.style.display = 'none';
+            
+            // 更新步驟
+            document.getElementById('pick-step-num').innerText = completed + 1;
+            document.getElementById('pick-step-total').innerText = total;
+            
+            // 更新儲位
+            document.getElementById('pick-location').innerText = nextTask.locationId;
+            document.getElementById('pick-pallet').innerText = '板號: ' + nextTask.palletId;
+            
+            // 更新產品
+            document.getElementById('pick-product').innerText = nextTask.productName;
+            document.getElementById('pick-qty').innerText = nextTask.pickQty;
+            
+            // 更新客戶
+            document.getElementById('pick-customer').innerText = 
+                (nextTask.customer || '客戶') + ' - ' + (nextTask.orderNo || '訂單');
+            
+            // 更新掃描提示
+            document.getElementById('picking-scan').placeholder = '掃描 ' + nextTask.locationId + ' 或 ' + nextTask.palletId;
+            document.getElementById('picking-scan').focus();
+        }
         
         function renderPickingList() {
             const list = document.getElementById('picking-list');
-            const completed = pickingItems.filter(i => i.completed).length;
+            const completed = pickingItems.filter(i => i.completed && !i.shortage).length;
             const total = pickingItems.filter(i => !i.shortage).length;
             document.getElementById('picking-progress').innerText = completed + '/' + total;
             
@@ -855,17 +1168,29 @@
                 return;
             }
             
-            // 按儲位排序
-            pickingItems.sort((a, b) => (a.locationId || '').localeCompare(b.locationId || ''));
+            // 找當前任務
+            const currentIdx = pickingItems.findIndex(i => !i.completed && !i.shortage);
             
-            list.innerHTML = pickingItems.map(item => {
-                const cls = item.completed ? 'completed' : item.shortage ? 'shortage' : '';
-                const status = item.completed ? '<span class="item-status done">✓ 完成</span>' :
-                              item.shortage ? '<span class="item-status shortage">缺貨</span>' :
-                              '<span class="item-status pending">待揀</span>';
+            list.innerHTML = pickingItems.filter(i => !i.shortage).map((item, idx) => {
+                const isCurrent = pickingItems.indexOf(item) === currentIdx;
+                const cls = item.completed ? 'completed' : (isCurrent ? 'current' : '');
+                const icon = item.completed ? '✓' : (isCurrent ? '▶' : item.stepNum);
+                const statusClass = item.completed ? 'done' : (isCurrent ? 'current' : 'pending');
+                
                 return `
                     <div class="list-item ${cls}">
                         <div class="item-row">
+                            <span class="step-num ${statusClass}">${icon}</span>
+                            <span class="item-location">${item.locationId}</span>
+                            <span class="item-qty" style="margin-left:auto;">${item.pickQty}件</span>
+                        </div>
+                        <div class="item-row sub">
+                            <span class="item-detail">${item.productName} | ${item.palletId}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
                             <span class="item-location">${item.locationId}</span>
                             ${status}
                         </div>
@@ -882,26 +1207,38 @@
         window.confirmPickingScan = async function() {
             const input = document.getElementById('picking-scan');
             const result = document.getElementById('picking-scan-result');
-            const scanned = input.value.trim();
+            const scanned = input.value.trim().toUpperCase();
             
             if (!scanned) return;
             
-            const found = pickingItems.find(i => !i.completed && !i.shortage && 
-                (i.palletId === scanned || i.locationId === scanned));
+            // 找當前應該執行的任務（第一個未完成的非缺貨）
+            const nextTask = pickingItems.find(i => !i.completed && !i.shortage);
             
-            if (!found) {
+            if (!nextTask) {
                 result.className = 'scan-result error';
-                result.innerText = '❌ 找不到：' + scanned;
+                result.innerText = '❌ 所有任務已完成';
+                return;
+            }
+            
+            // 檢查掃描是否匹配當前任務
+            const locMatch = nextTask.locationId.toUpperCase() === scanned;
+            const palletMatch = nextTask.palletId && nextTask.palletId.toUpperCase() === scanned;
+            
+            if (!locMatch && !palletMatch) {
+                result.className = 'scan-result error';
+                result.innerText = '❌ 請掃描 ' + nextTask.locationId + ' 或 ' + nextTask.palletId;
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
                 input.select();
                 return;
             }
             
-            found.completed = true;
+            // 確認完成
+            nextTask.completed = true;
             
             // 儲存進度到 Firebase
             try {
                 if (!currentWave.completedItems) currentWave.completedItems = [];
-                currentWave.completedItems.push(found.id);
+                currentWave.completedItems.push(nextTask.id);
                 
                 await window.updateDoc(window.doc(window.db, 'waves', currentWave.id), {
                     completedItems: currentWave.completedItems,
@@ -912,14 +1249,19 @@
             }
             
             result.className = 'scan-result success';
-            result.innerText = '✓ ' + found.productName + ' x ' + found.pickQty;
-            
-            renderPickingList();
-            input.value = '';
-            input.focus();
+            result.innerText = '✓ ' + nextTask.productName + ' x ' + nextTask.pickQty;
             
             // 震動反饋
             if (navigator.vibrate) navigator.vibrate(100);
+            
+            // 更新畫面
+            renderPickingList();
+            renderCurrentPickingTask();
+            
+            input.value = '';
+            
+            // 清除結果提示
+            setTimeout(() => { result.innerText = ''; }, 2000);
         };
         
         window.completePickingWave = async function() {
@@ -1040,8 +1382,10 @@
         window.loadDispatchOrder = function() {
             const orderId = document.getElementById('dispatch-order-select').value;
             if (!orderId) {
-                document.getElementById('dispatch-scan-area').style.display = 'none';
+                document.getElementById('current-task-card').style.display = 'none';
+                document.getElementById('all-done-card').style.display = 'none';
                 document.getElementById('dispatch-actions').style.display = 'none';
+                document.getElementById('dispatch-list').innerHTML = '<div class="empty-state"><i class="fa-solid fa-clipboard-list"></i><p>請先選擇工單</p></div>';
                 return;
             }
             
@@ -1051,14 +1395,61 @@
             dispatchItems = (currentDispatch.operations || []).map((op, idx) => ({
                 ...op,
                 id: op.id || 'op-' + idx,
+                stepNum: idx + 1,
                 completed: (currentDispatch.completedOps || []).includes(op.id || 'op-' + idx)
             }));
             
             renderDispatchList();
-            document.getElementById('dispatch-scan-area').style.display = 'block';
+            renderCurrentTask();
             document.getElementById('dispatch-actions').style.display = 'block';
-            document.getElementById('dispatch-scan').focus();
         };
+        
+        // 渲染當前任務指令卡
+        function renderCurrentTask() {
+            const card = document.getElementById('current-task-card');
+            const doneCard = document.getElementById('all-done-card');
+            
+            // 找第一個未完成的任務
+            const nextTask = dispatchItems.find(i => !i.completed);
+            const completed = dispatchItems.filter(i => i.completed).length;
+            const total = dispatchItems.length;
+            
+            if (!nextTask) {
+                // 全部完成
+                card.style.display = 'none';
+                doneCard.style.display = 'block';
+                document.getElementById('done-summary').innerText = '已完成 ' + total + ' 項調度任務';
+                return;
+            }
+            
+            // 顯示當前任務
+            card.style.display = 'block';
+            doneCard.style.display = 'none';
+            
+            // 更新步驟
+            document.getElementById('task-step-num').innerText = completed + 1;
+            document.getElementById('task-step-total').innerText = total;
+            
+            // 更新類型
+            const typeBadge = document.getElementById('task-type-badge');
+            typeBadge.innerText = nextTask.type;
+            typeBadge.className = 'task-type-badge' + (nextTask.type === '移位' ? ' move' : '');
+            
+            // 更新來源
+            document.getElementById('task-from-loc').innerText = nextTask.from;
+            document.getElementById('task-from-pallet').innerText = nextTask.palletId ? '板號: ' + nextTask.palletId : '掃描儲位確認';
+            
+            // 更新數量
+            document.getElementById('task-qty').innerText = nextTask.qty + ' 件';
+            
+            // 更新目標
+            document.getElementById('task-to-loc').innerText = nextTask.to;
+            document.getElementById('task-hint').innerText = nextTask.type === '合併' ? '合併至此板' : '移動至此位';
+            
+            // 更新掃描提示
+            document.getElementById('dispatch-scan').placeholder = '掃描 ' + nextTask.from + ' 或板號確認';
+            document.getElementById('dispatch-scan').focus();
+        }
         
         function renderDispatchList() {
             const list = document.getElementById('dispatch-list');
@@ -1070,20 +1461,26 @@
                 return;
             }
             
-            list.innerHTML = dispatchItems.map(item => {
-                const cls = item.completed ? 'completed' : '';
-                const status = item.completed ? '<span class="item-status done">✓ 完成</span>' :
-                              '<span class="item-status pending">' + item.type + '</span>';
+            // 找當前任務
+            const currentIdx = dispatchItems.findIndex(i => !i.completed);
+            
+            list.innerHTML = dispatchItems.map((item, idx) => {
+                const isCurrent = idx === currentIdx;
+                const cls = item.completed ? 'completed' : (isCurrent ? 'current' : '');
+                const icon = item.completed ? '✓' : (isCurrent ? '▶' : (idx + 1));
+                const statusClass = item.completed ? 'done' : (isCurrent ? 'current' : 'pending');
+                
                 return `
                     <div class="list-item ${cls}">
                         <div class="item-row">
+                            <span class="step-num ${statusClass}">${icon}</span>
                             <span class="item-location">${item.from}</span>
-                            ${status}
+                            <span class="item-arrow">→</span>
+                            <span class="item-location to">${item.to}</span>
                         </div>
-                        <div class="item-product">${item.palletId || '-'} → ${item.to}</div>
-                        <div class="item-row">
-                            <span class="item-detail">${item.type}</span>
-                            <span class="item-qty">${item.qty}</span>
+                        <div class="item-row sub">
+                            <span class="item-detail">${item.type} | ${item.palletId || '-'}</span>
+                            <span class="item-qty">${item.qty}件</span>
                         </div>
                     </div>
                 `;
@@ -1093,26 +1490,38 @@
         window.confirmDispatchScan = async function() {
             const input = document.getElementById('dispatch-scan');
             const result = document.getElementById('dispatch-scan-result');
-            const scanned = input.value.trim();
+            const scanned = input.value.trim().toUpperCase();
             
             if (!scanned) return;
             
-            const found = dispatchItems.find(i => !i.completed && 
-                (i.palletId === scanned || i.from === scanned));
+            // 找當前應該執行的任務（第一個未完成的）
+            const nextTask = dispatchItems.find(i => !i.completed);
             
-            if (!found) {
+            if (!nextTask) {
                 result.className = 'scan-result error';
-                result.innerText = '❌ 找不到：' + scanned;
+                result.innerText = '❌ 所有任務已完成';
+                return;
+            }
+            
+            // 檢查掃描是否匹配當前任務
+            const fromMatch = nextTask.from.toUpperCase() === scanned;
+            const palletMatch = nextTask.palletId && nextTask.palletId.toUpperCase() === scanned;
+            
+            if (!fromMatch && !palletMatch) {
+                result.className = 'scan-result error';
+                result.innerText = '❌ 請掃描 ' + nextTask.from + (nextTask.palletId ? ' 或 ' + nextTask.palletId : '');
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
                 input.select();
                 return;
             }
             
-            found.completed = true;
+            // 確認完成
+            nextTask.completed = true;
             
             // 儲存進度到 Firebase
             try {
                 if (!currentDispatch.completedOps) currentDispatch.completedOps = [];
-                currentDispatch.completedOps.push(found.id);
+                currentDispatch.completedOps.push(nextTask.id);
                 
                 await window.updateDoc(window.doc(window.db, 'dispatchOrders', currentDispatch.id), {
                     completedOps: currentDispatch.completedOps,
@@ -1123,11 +1532,20 @@
             }
             
             result.className = 'scan-result success';
-            result.innerText = '✓ ' + found.from + ' → ' + found.to;
+            result.innerText = '✓ 完成：' + nextTask.from + ' → ' + nextTask.to;
             
+            // 震動反饋
+            if (navigator.vibrate) navigator.vibrate(100);
+            
+            // 更新畫面
             renderDispatchList();
+            renderCurrentTask();
+            
             input.value = '';
-            input.focus();
+            
+            // 清除結果提示
+            setTimeout(() => { result.innerText = ''; }, 2000);
+        };
             if (navigator.vibrate) navigator.vibrate(100);
         };
         
