@@ -139,6 +139,23 @@
         .menu-text h3 { font-size: 18px; margin-bottom: 4px; }
         .menu-text p { font-size: 13px; color: #94a3b8; }
         .menu-arrow { margin-left: auto; color: #475569; font-size: 20px; }
+        .menu-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+        }
+        .menu-icon { position: relative; }
         
         /* 功能頁面 */
         .func-page {
@@ -360,7 +377,10 @@
         
         <div class="main-menu">
             <div class="menu-card picking" onclick="openPage('picking')">
-                <div class="menu-icon"><i class="fa-solid fa-barcode"></i></div>
+                <div class="menu-icon">
+                    <i class="fa-solid fa-barcode"></i>
+                    <span class="menu-badge" id="badge-picking" style="display:none">0</span>
+                </div>
                 <div class="menu-text">
                     <h3>揀貨掃描</h3>
                     <p>波次揀貨確認</p>
@@ -369,7 +389,10 @@
             </div>
             
             <div class="menu-card inbound" onclick="openPage('inbound')">
-                <div class="menu-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+                <div class="menu-icon">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                    <span class="menu-badge" id="badge-inbound" style="display:none">0</span>
+                </div>
                 <div class="menu-text">
                     <h3>入庫確認</h3>
                     <p>掃描板號確認入庫</p>
@@ -378,7 +401,10 @@
             </div>
             
             <div class="menu-card dispatch" onclick="openPage('dispatch')">
-                <div class="menu-icon"><i class="fa-solid fa-truck-moving"></i></div>
+                <div class="menu-icon">
+                    <i class="fa-solid fa-truck-moving"></i>
+                    <span class="menu-badge" id="badge-dispatch" style="display:none">0</span>
+                </div>
                 <div class="menu-text">
                     <h3>調度執行</h3>
                     <p>移位/合併作業</p>
@@ -536,7 +562,7 @@
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = { 
@@ -558,13 +584,23 @@
         window.doc = doc;
         window.updateDoc = updateDoc;
         window.deleteDoc = deleteDoc;
+        window.addDoc = addDoc;
         window.query = query;
         window.where = where;
         window.orderBy = orderBy;
         window.onSnapshot = onSnapshot;
+        window.serverTimestamp = serverTimestamp;
         
-        // 庫存資料
+        // 資料
         window.pallets = [];
+        window.waves = [];
+        window.dispatchOrders = [];
+        window.inboundTasks = [];
+        
+        // 工單數量（用於通知）
+        let prevWaveCount = 0;
+        let prevDispatchCount = 0;
+        let prevInboundCount = 0;
         
         // 監聽認證狀態
         onAuthStateChanged(auth, (user) => {
@@ -601,24 +637,133 @@
             signOut(auth);
         };
         
-        // 初始化資料
+        // 初始化資料 - 即時監聽
         function initData() {
             // 監聽庫存
             onSnapshot(collection(db, 'pallets'), (snap) => {
                 window.pallets = [];
                 snap.forEach(d => window.pallets.push({ id: d.id, ...d.data() }));
+                updateBadges();
             });
+            
+            // 監聽波次工單
+            onSnapshot(collection(db, 'waves'), (snap) => {
+                window.waves = [];
+                snap.forEach(d => window.waves.push({ id: d.id, ...d.data() }));
+                
+                // 檢查新工單通知
+                const activeWaves = window.waves.filter(w => w.status !== 'done').length;
+                if (prevWaveCount > 0 && activeWaves > prevWaveCount) {
+                    showNotification('📦 新揀貨波次', '有新的揀貨任務！');
+                }
+                prevWaveCount = activeWaves;
+                updateBadges();
+            });
+            
+            // 監聽調度工單
+            onSnapshot(collection(db, 'dispatchOrders'), (snap) => {
+                window.dispatchOrders = [];
+                snap.forEach(d => window.dispatchOrders.push({ id: d.id, ...d.data() }));
+                
+                // 檢查新工單通知
+                const activeOrders = window.dispatchOrders.filter(o => o.status !== 'done').length;
+                if (prevDispatchCount > 0 && activeOrders > prevDispatchCount) {
+                    showNotification('🚛 新調度工單', '有新的調度任務！');
+                }
+                prevDispatchCount = activeOrders;
+                updateBadges();
+            });
+            
+            // 監聯入庫任務
+            onSnapshot(collection(db, 'inboundTasks'), (snap) => {
+                window.inboundTasks = [];
+                snap.forEach(d => window.inboundTasks.push({ id: d.id, ...d.data() }));
+                
+                // 檢查新任務通知
+                const activeTasks = window.inboundTasks.filter(t => t.status !== 'done').length;
+                if (prevInboundCount > 0 && activeTasks > prevInboundCount) {
+                    showNotification('📥 新入庫任務', '有新的入庫任務！');
+                }
+                prevInboundCount = activeTasks;
+                updateBadges();
+            });
+        }
+        
+        // 顯示通知
+        function showNotification(title, body) {
+            // 震動
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            
+            // 瀏覽器通知（如果有權限）
+            if (Notification.permission === 'granted') {
+                new Notification(title, { body: body, icon: '📦' });
+            }
+            
+            // 畫面提示
+            showToast(title + ' - ' + body);
+        }
+        
+        // Toast 提示
+        window.showToast = function(msg) {
+            let toast = document.getElementById('toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast';
+                toast.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#3b82f6;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:9999;opacity:0;transition:opacity 0.3s;';
+                document.body.appendChild(toast);
+            }
+            toast.innerText = msg;
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+        };
+        
+        // 請求通知權限
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
         }
     </script>
     
     <script>
+        // 更新 Badge 數量
+        function updateBadges() {
+            // 揀貨
+            const activeWaves = (window.waves || []).filter(w => w.status !== 'done').length;
+            const badgePicking = document.getElementById('badge-picking');
+            if (activeWaves > 0) {
+                badgePicking.innerText = activeWaves;
+                badgePicking.style.display = 'flex';
+            } else {
+                badgePicking.style.display = 'none';
+            }
+            
+            // 入庫
+            const activeTasks = (window.inboundTasks || []).filter(t => t.status !== 'done').length;
+            const badgeInbound = document.getElementById('badge-inbound');
+            if (activeTasks > 0) {
+                badgeInbound.innerText = activeTasks;
+                badgeInbound.style.display = 'flex';
+            } else {
+                badgeInbound.style.display = 'none';
+            }
+            
+            // 調度
+            const activeDispatch = (window.dispatchOrders || []).filter(o => o.status !== 'done').length;
+            const badgeDispatch = document.getElementById('badge-dispatch');
+            if (activeDispatch > 0) {
+                badgeDispatch.innerText = activeDispatch;
+                badgeDispatch.style.display = 'flex';
+            } else {
+                badgeDispatch.style.display = 'none';
+            }
+        }
+        
         // 頁面切換
         function openPage(page) {
             document.getElementById('app-main').classList.remove('active');
             document.getElementById('page-' + page).classList.add('active');
             
             if (page === 'picking') loadPickingWaves();
-            if (page === 'inbound') loadInboundRecords();
+            if (page === 'inbound') loadInboundTasks();
             if (page === 'dispatch') loadDispatchOrders();
         }
         
@@ -632,25 +777,25 @@
         let pickingItems = [];
         
         function loadPickingWaves() {
-            const waves = JSON.parse(localStorage.getItem('wms_waves') || '[]');
+            const waves = window.waves || [];
             const select = document.getElementById('picking-wave-select');
             select.innerHTML = '<option value="">-- 請選擇 --</option>';
             
             waves.filter(w => w.status !== 'done').forEach(w => {
-                select.innerHTML += `<option value="${w.waveNo}">${w.waveNo} - ${w.logistics} (${w.totalQty}件)</option>`;
+                select.innerHTML += `<option value="${w.id}">${w.waveNo} - ${w.logistics || '混合'} (${w.totalQty || 0}件)</option>`;
             });
         }
         
         window.loadPickingWave = function() {
-            const waveNo = document.getElementById('picking-wave-select').value;
-            if (!waveNo) {
+            const waveId = document.getElementById('picking-wave-select').value;
+            if (!waveId) {
                 document.getElementById('picking-scan-area').style.display = 'none';
                 document.getElementById('picking-actions').style.display = 'none';
                 return;
             }
             
-            const waves = JSON.parse(localStorage.getItem('wms_waves') || '[]');
-            currentWave = waves.find(w => w.waveNo === waveNo);
+            const waves = window.waves || [];
+            currentWave = waves.find(w => w.id === waveId);
             if (!currentWave) return;
             
             // 產生揀貨清單
@@ -734,7 +879,7 @@
             }).join('');
         }
         
-        window.confirmPickingScan = function() {
+        window.confirmPickingScan = async function() {
             const input = document.getElementById('picking-scan');
             const result = document.getElementById('picking-scan-result');
             const scanned = input.value.trim();
@@ -753,13 +898,18 @@
             
             found.completed = true;
             
-            // 儲存進度
-            if (!currentWave.completedItems) currentWave.completedItems = [];
-            currentWave.completedItems.push(found.id);
-            const waves = JSON.parse(localStorage.getItem('wms_waves') || '[]');
-            const idx = waves.findIndex(w => w.waveNo === currentWave.waveNo);
-            if (idx >= 0) waves[idx] = currentWave;
-            localStorage.setItem('wms_waves', JSON.stringify(waves));
+            // 儲存進度到 Firebase
+            try {
+                if (!currentWave.completedItems) currentWave.completedItems = [];
+                currentWave.completedItems.push(found.id);
+                
+                await window.updateDoc(window.doc(window.db, 'waves', currentWave.id), {
+                    completedItems: currentWave.completedItems,
+                    status: 'picking'
+                });
+            } catch (err) {
+                console.error('儲存失敗:', err);
+            }
             
             result.className = 'scan-result success';
             result.innerText = '✓ ' + found.productName + ' x ' + found.pickQty;
@@ -772,7 +922,7 @@
             if (navigator.vibrate) navigator.vibrate(100);
         };
         
-        window.completePickingWave = function() {
+        window.completePickingWave = async function() {
             const completed = pickingItems.filter(i => i.completed).length;
             const total = pickingItems.filter(i => !i.shortage).length;
             
@@ -783,135 +933,126 @@
             
             if (!confirm(`完成波次？\n\n已揀：${completed}/${total}`)) return;
             
-            currentWave.status = 'done';
-            currentWave.completedAt = new Date().toISOString();
-            
-            const waves = JSON.parse(localStorage.getItem('wms_waves') || '[]');
-            const idx = waves.findIndex(w => w.waveNo === currentWave.waveNo);
-            if (idx >= 0) waves[idx] = currentWave;
-            localStorage.setItem('wms_waves', JSON.stringify(waves));
+            // 更新 Firebase
+            try {
+                await window.updateDoc(window.doc(window.db, 'waves', currentWave.id), {
+                    status: 'done',
+                    completedAt: new Date().toISOString()
+                });
+            } catch (err) {
+                console.error('更新失敗:', err);
+            }
             
             alert('✅ 波次完成！');
             goBack();
         };
         
-        // ========== 入庫確認 ==========
-        let inboundRecords = [];
+        // ========== 入庫任務 ==========
         
-        function loadInboundRecords() {
-            // 從今日庫存中找
-            const today = new Date().toISOString().split('T')[0];
-            inboundRecords = window.pallets.filter(p => 
-                p.createdAt && p.createdAt.indexOf(today) === 0
-            );
+        function loadInboundTasks() {
+            const tasks = (window.inboundTasks || []).filter(t => t.status !== 'done');
             
-            document.getElementById('inbound-count').innerText = inboundRecords.length + ' 筆';
+            document.getElementById('inbound-count').innerText = tasks.length + ' 筆待入庫';
             
             const list = document.getElementById('inbound-list');
-            if (inboundRecords.length === 0) {
-                list.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>今日尚無入庫記錄</p></div>';
+            if (tasks.length === 0) {
+                list.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>目前沒有待入庫任務</p></div>';
                 return;
             }
             
-            list.innerHTML = inboundRecords.map(r => `
-                <div class="list-item completed">
+            list.innerHTML = tasks.map(t => `
+                <div class="list-item" data-id="${t.id}">
                     <div class="item-row">
-                        <span class="item-location">${r.locationId}</span>
-                        <span class="item-status done">已入庫</span>
+                        <span class="item-location">${t.locationId || '待分配'}</span>
+                        <span class="item-status pending">待入庫</span>
                     </div>
-                    <div class="item-product">${r.productName}</div>
+                    <div class="item-product">${t.productName}</div>
                     <div class="item-row">
-                        <span class="item-detail">${r.palletId} | ${r.batchNo || '-'}</span>
-                        <span class="item-qty">${r.quantity}</span>
+                        <span class="item-detail">${t.palletId || '-'} | ${t.batchNo || '-'}</span>
+                        <span class="item-qty">${t.quantity}</span>
                     </div>
                 </div>
             `).join('');
         }
         
-        window.confirmInboundScan = function() {
+        window.confirmInboundScan = async function() {
             const input = document.getElementById('inbound-scan');
             const result = document.getElementById('inbound-scan-result');
             const scanned = input.value.trim();
             
             if (!scanned) return;
             
-            const found = window.pallets.find(p => p.palletId === scanned);
+            // 先檢查待入庫任務
+            const task = (window.inboundTasks || []).find(t => 
+                t.status !== 'done' && (t.palletId === scanned || t.orderNo === scanned)
+            );
             
-            if (found) {
-                result.className = 'scan-result success';
-                result.innerText = '✓ 已存在：' + found.productName + ' @ ' + found.locationId;
+            if (task) {
+                // 找到任務，確認入庫
+                try {
+                    await window.updateDoc(window.doc(window.db, 'inboundTasks', task.id), {
+                        status: 'done',
+                        confirmedAt: new Date().toISOString()
+                    });
+                    
+                    result.className = 'scan-result success';
+                    result.innerText = '✓ 入庫確認：' + task.productName + ' @ ' + task.locationId;
+                    
+                    loadInboundTasks();
+                    if (navigator.vibrate) navigator.vibrate(100);
+                } catch (err) {
+                    result.className = 'scan-result error';
+                    result.innerText = '❌ 確認失敗：' + err.message;
+                }
             } else {
-                result.className = 'scan-result error';
-                result.innerText = '❌ 板號不存在：' + scanned;
+                // 檢查庫存是否已存在
+                const found = window.pallets.find(p => p.palletId === scanned);
+                
+                if (found) {
+                    result.className = 'scan-result success';
+                    result.innerText = '✓ 已存在：' + found.productName + ' @ ' + found.locationId;
+                } else {
+                    result.className = 'scan-result error';
+                    result.innerText = '❌ 找不到：' + scanned;
+                }
             }
             
             input.value = '';
             input.focus();
-            if (navigator.vibrate) navigator.vibrate(found ? 100 : [100, 50, 100]);
         };
         
         // ========== 調度執行 ==========
-        let dispatchOrders = [];
         let currentDispatch = null;
         let dispatchItems = [];
         
         function loadDispatchOrders() {
-            // 從 localStorage 讀取調度分析結果
-            const analysis = JSON.parse(localStorage.getItem('wms_dispatch_analysis') || '[]');
-            dispatchOrders = analysis;
+            const orders = (window.dispatchOrders || []).filter(o => o.status !== 'done');
             
             const select = document.getElementById('dispatch-order-select');
             select.innerHTML = '<option value="">-- 請選擇 --</option>';
             
-            dispatchOrders.forEach((item, idx) => {
-                const ops = (item.partialMerges ? item.partialMerges.reduce((s, m) => s + m.sources.length, 0) : 0) +
-                           (item.isolatedMoves ? item.isolatedMoves.length : 0);
-                select.innerHTML += `<option value="${idx}">工單 #${String(idx+1).padStart(3,'0')} - ${item.name} (${ops}項)</option>`;
+            orders.forEach((order, idx) => {
+                const ops = (order.operations || []).length;
+                select.innerHTML += `<option value="${order.id}">${order.orderNo || '工單'} - ${order.productName || ''} (${ops}項)</option>`;
             });
         }
         
         window.loadDispatchOrder = function() {
-            const idx = parseInt(document.getElementById('dispatch-order-select').value);
-            if (isNaN(idx) || idx < 0) {
+            const orderId = document.getElementById('dispatch-order-select').value;
+            if (!orderId) {
                 document.getElementById('dispatch-scan-area').style.display = 'none';
                 document.getElementById('dispatch-actions').style.display = 'none';
                 return;
             }
             
-            currentDispatch = dispatchOrders[idx];
-            dispatchItems = [];
+            currentDispatch = (window.dispatchOrders || []).find(o => o.id === orderId);
+            if (!currentDispatch) return;
             
-            // 合併操作
-            if (currentDispatch.partialMerges) {
-                currentDispatch.partialMerges.forEach((g, gIdx) => {
-                    g.sources.forEach((src, sIdx) => {
-                        dispatchItems.push({
-                            id: 'merge-' + gIdx + '-' + sIdx,
-                            type: '合併',
-                            from: src.location,
-                            palletId: src.palletId || '',
-                            qty: src.qty,
-                            to: g.keep.location,
-                            completed: false
-                        });
-                    });
-                });
-            }
-            
-            // 移位操作
-            if (currentDispatch.isolatedMoves) {
-                currentDispatch.isolatedMoves.forEach((m, mIdx) => {
-                    dispatchItems.push({
-                        id: 'move-' + mIdx,
-                        type: '移位',
-                        from: m.from,
-                        palletId: m.palletId || '',
-                        qty: m.qty,
-                        to: m.toSlot,
-                        completed: false
-                    });
-                });
-            }
+            dispatchItems = (currentDispatch.operations || []).map((op, idx) => ({
+                ...op,
+                id: op.id || 'op-' + idx,
+                completed: (currentDispatch.completedOps || []).includes(op.id || 'op-' + idx)
+            }));
             
             renderDispatchList();
             document.getElementById('dispatch-scan-area').style.display = 'block';
@@ -949,7 +1090,7 @@
             }).join('');
         }
         
-        window.confirmDispatchScan = function() {
+        window.confirmDispatchScan = async function() {
             const input = document.getElementById('dispatch-scan');
             const result = document.getElementById('dispatch-scan-result');
             const scanned = input.value.trim();
@@ -968,6 +1109,19 @@
             
             found.completed = true;
             
+            // 儲存進度到 Firebase
+            try {
+                if (!currentDispatch.completedOps) currentDispatch.completedOps = [];
+                currentDispatch.completedOps.push(found.id);
+                
+                await window.updateDoc(window.doc(window.db, 'dispatchOrders', currentDispatch.id), {
+                    completedOps: currentDispatch.completedOps,
+                    status: 'executing'
+                });
+            } catch (err) {
+                console.error('儲存失敗:', err);
+            }
+            
             result.className = 'scan-result success';
             result.innerText = '✓ ' + found.from + ' → ' + found.to;
             
@@ -977,7 +1131,7 @@
             if (navigator.vibrate) navigator.vibrate(100);
         };
         
-        window.completeDispatchOrder = function() {
+        window.completeDispatchOrder = async function() {
             const completed = dispatchItems.filter(i => i.completed).length;
             
             if (completed === 0) {
@@ -986,6 +1140,16 @@
             }
             
             if (!confirm(`完成工單？\n\n已執行：${completed}/${dispatchItems.length}`)) return;
+            
+            // 更新 Firebase
+            try {
+                await window.updateDoc(window.doc(window.db, 'dispatchOrders', currentDispatch.id), {
+                    status: 'done',
+                    completedAt: new Date().toISOString()
+                });
+            } catch (err) {
+                console.error('更新失敗:', err);
+            }
             
             alert('✅ 工單完成！');
             goBack();
