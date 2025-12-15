@@ -9,6 +9,10 @@
     <title>Terry WMS 手機版</title>
     <link rel="manifest" href="data:application/json,{'name':'Terry WMS','short_name':'WMS','start_url':'.','display':'standalone','background_color':'%230f172a','theme_color':'%230f172a'}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- 🆕 條碼掃描庫 QuaggaJS -->
+    <script src="https://unpkg.com/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -218,6 +222,20 @@
             font-size: 16px;
         }
         .scan-btn:active { background: #2563eb; }
+        
+        /* 🆕 相機掃描按鈕 */
+        .camera-btn {
+            padding: 14px 16px;
+            background: #10b981;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .camera-btn:active { background: #059669; }
+        
         .scan-hint { color: #64748b; font-size: 13px; }
         .scan-result {
             margin-top: 12px;
@@ -342,6 +360,142 @@
         
         /* 隱藏 */
         .hidden { display: none !important; }
+        
+        /* 🆕 相機掃描 Modal 樣式 */
+        #camera-scanner-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000;
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+        }
+        #camera-scanner-modal.active { display: flex; }
+        
+        #camera-scanner-modal .scanner-header {
+            background: #1e293b;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #fff;
+        }
+        #camera-scanner-modal .scanner-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+        #camera-scanner-modal .close-btn {
+            background: rgba(239, 68, 68, 0.2);
+            border: none;
+            color: #f87171;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        #camera-scanner-modal .scanner-viewport {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #000;
+        }
+        #camera-scanner-modal .scanner-viewport video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #camera-scanner-modal .scanner-viewport canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #camera-scanner-modal .scan-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 280px;
+            height: 150px;
+            border: 3px solid #3b82f6;
+            border-radius: 12px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+            pointer-events: none;
+        }
+        #camera-scanner-modal .scan-line {
+            position: absolute;
+            top: 0;
+            left: 10px;
+            right: 10px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+            animation: scanLine 2s linear infinite;
+        }
+        @keyframes scanLine {
+            0% { top: 10px; }
+            50% { top: calc(100% - 12px); }
+            100% { top: 10px; }
+        }
+        #camera-scanner-modal .scan-hint-overlay {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #fff;
+            font-size: 14px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+        #camera-scanner-modal .scan-result-toast {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: #10b981;
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            animation: toastIn 0.3s ease;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #camera-scanner-modal .manual-input {
+            background: #1e293b;
+            padding: 12px 16px;
+            display: flex;
+            gap: 10px;
+        }
+        #camera-scanner-modal .manual-input input {
+            flex: 1;
+            padding: 12px;
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+        }
+        #camera-scanner-modal .manual-input input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        #camera-scanner-modal .manual-input button {
+            padding: 12px 20px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -439,10 +593,11 @@
         
         <div class="scan-section" id="picking-scan-area" style="display:none">
             <div class="scan-input-wrap">
-                <input type="text" id="picking-scan" class="scan-input" placeholder="掃描儲位或板號">
+                <input type="text" id="picking-scan" class="scan-input" placeholder="掃描儲位或板號" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <button class="camera-btn" onclick="openCameraScanner('picking-scan')"><i class="fa-solid fa-camera"></i></button>
                 <button class="scan-btn" onclick="confirmPickingScan()"><i class="fa-solid fa-check"></i></button>
             </div>
-            <p class="scan-hint">掃描後自動確認揀貨</p>
+            <p class="scan-hint">📷 點擊相機按鈕開啟掃描 | 或使用條碼槍</p>
             <div id="picking-scan-result" class="scan-result"></div>
         </div>
         
@@ -475,10 +630,11 @@
         
         <div class="scan-section">
             <div class="scan-input-wrap">
-                <input type="text" id="inbound-scan" class="scan-input" placeholder="掃描入庫板號">
+                <input type="text" id="inbound-scan" class="scan-input" placeholder="掃描入庫板號" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <button class="camera-btn" onclick="openCameraScanner('inbound-scan')"><i class="fa-solid fa-camera"></i></button>
                 <button class="scan-btn" onclick="confirmInboundScan()"><i class="fa-solid fa-check"></i></button>
             </div>
-            <p class="scan-hint">掃描板號確認實際入庫</p>
+            <p class="scan-hint">📷 點擊相機按鈕開啟掃描 | 或使用條碼槍</p>
             <div id="inbound-scan-result" class="scan-result"></div>
         </div>
         
@@ -509,10 +665,11 @@
         
         <div class="scan-section" id="dispatch-scan-area" style="display:none">
             <div class="scan-input-wrap">
-                <input type="text" id="dispatch-scan" class="scan-input" placeholder="掃描板號確認">
+                <input type="text" id="dispatch-scan" class="scan-input" placeholder="掃描板號確認" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <button class="camera-btn" onclick="openCameraScanner('dispatch-scan')"><i class="fa-solid fa-camera"></i></button>
                 <button class="scan-btn" onclick="confirmDispatchScan()"><i class="fa-solid fa-check"></i></button>
             </div>
-            <p class="scan-hint">掃描板號確認執行</p>
+            <p class="scan-hint">📷 點擊相機按鈕開啟掃描 | 或使用條碼槍</p>
             <div id="dispatch-scan-result" class="scan-result"></div>
         </div>
         
@@ -545,10 +702,11 @@
         
         <div class="scan-section">
             <div class="scan-input-wrap">
-                <input type="text" id="query-input" class="scan-input" placeholder="輸入品名或板號">
+                <input type="text" id="query-input" class="scan-input" placeholder="輸入品名或板號" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <button class="camera-btn" onclick="openCameraScanner('query-input')"><i class="fa-solid fa-camera"></i></button>
                 <button class="scan-btn" onclick="doInventoryQuery()"><i class="fa-solid fa-search"></i></button>
             </div>
-            <p class="scan-hint">支援模糊搜尋</p>
+            <p class="scan-hint">📷 支援相機掃描條碼 | 或手動輸入關鍵字</p>
         </div>
         
         <div class="query-result" id="query-result">
@@ -556,6 +714,25 @@
                 <i class="fa-solid fa-box-open"></i>
                 <p>輸入關鍵字搜尋庫存</p>
             </div>
+        </div>
+    </div>
+    
+    <!-- 🆕 相機掃描 Modal -->
+    <div id="camera-scanner-modal">
+        <div class="scanner-header">
+            <h3>📷 掃描條碼</h3>
+            <button class="close-btn" onclick="closeCameraScanner()">✕ 關閉</button>
+        </div>
+        <div class="scanner-viewport" id="scanner-viewport">
+            <div class="scan-overlay">
+                <div class="scan-line"></div>
+            </div>
+            <p class="scan-hint-overlay">將條碼對準框內</p>
+            <div class="scan-result-toast" id="scan-result-toast"></div>
+        </div>
+        <div class="manual-input">
+            <input type="text" id="manual-barcode-input" placeholder="或手動輸入條碼..." autocomplete="off">
+            <button onclick="submitManualBarcode()">確認</button>
         </div>
     </div>
 
@@ -674,7 +851,7 @@
                 updateBadges();
             });
             
-            // 監聯入庫任務
+            // 監聽入庫任務
             onSnapshot(collection(db, 'inboundTasks'), (snap) => {
                 window.inboundTasks = [];
                 snap.forEach(d => window.inboundTasks.push({ id: d.id, ...d.data() }));
@@ -724,6 +901,180 @@
     </script>
     
     <script>
+        // ==================== 🆕 相機掃描功能 ====================
+        let isScanning = false;
+        let currentTargetInput = null;
+        let lastScanTime = 0;
+        const SCAN_COOLDOWN = 1000; // 1秒冷卻
+        
+        // 音效
+        let audioContext = null;
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) {}
+        
+        function playSuccessSound() {
+            if (!audioContext) return;
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.frequency.value = 1200;
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            } catch(e) {}
+        }
+        
+        function playErrorSound() {
+            if (!audioContext) return;
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.frequency.value = 300;
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } catch(e) {}
+        }
+        
+        // 開啟相機掃描
+        window.openCameraScanner = function(targetInputId) {
+            currentTargetInput = document.getElementById(targetInputId);
+            const modal = document.getElementById('camera-scanner-modal');
+            modal.classList.add('active');
+            
+            // 初始化 Quagga
+            if (typeof Quagga !== 'undefined') {
+                Quagga.init({
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: document.getElementById('scanner-viewport'),
+                        constraints: {
+                            facingMode: "environment",
+                            width: { min: 640, ideal: 1280, max: 1920 },
+                            height: { min: 480, ideal: 720, max: 1080 }
+                        }
+                    },
+                    locator: {
+                        patchSize: "medium",
+                        halfSample: true
+                    },
+                    numOfWorkers: navigator.hardwareConcurrency || 4,
+                    decoder: {
+                        readers: [
+                            "code_128_reader",
+                            "ean_reader",
+                            "ean_8_reader",
+                            "code_39_reader",
+                            "upc_reader",
+                            "upc_e_reader",
+                            "codabar_reader",
+                            "i2of5_reader"
+                        ]
+                    },
+                    locate: true
+                }, function(err) {
+                    if (err) {
+                        console.error('Quagga 初始化失敗:', err);
+                        alert('無法啟動相機，請確認已授權相機權限\n\n錯誤: ' + err.message);
+                        closeCameraScanner();
+                        return;
+                    }
+                    Quagga.start();
+                    isScanning = true;
+                    console.log('📷 相機掃描已啟動');
+                });
+                
+                // 監聽掃描結果
+                Quagga.onDetected(function(result) {
+                    if (!result || !result.codeResult) return;
+                    
+                    const barcode = result.codeResult.code;
+                    const now = Date.now();
+                    
+                    // 冷卻時間檢查
+                    if (now - lastScanTime < SCAN_COOLDOWN) return;
+                    lastScanTime = now;
+                    
+                    console.log('📷 掃描成功:', barcode);
+                    handleScanResult(barcode);
+                });
+            } else {
+                alert('掃描功能未載入，請重新整理頁面');
+                closeCameraScanner();
+            }
+        };
+        
+        // 關閉相機掃描
+        window.closeCameraScanner = function() {
+            if (isScanning && typeof Quagga !== 'undefined') {
+                Quagga.stop();
+                isScanning = false;
+            }
+            document.getElementById('camera-scanner-modal').classList.remove('active');
+            currentTargetInput = null;
+        };
+        
+        // 處理掃描結果
+        function handleScanResult(barcode) {
+            // 顯示 Toast
+            const toast = document.getElementById('scan-result-toast');
+            toast.textContent = '✓ ' + barcode;
+            toast.style.display = 'block';
+            
+            // 音效 + 震動
+            playSuccessSound();
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            
+            // 填入輸入框
+            if (currentTargetInput) {
+                currentTargetInput.value = barcode;
+            }
+            
+            // 延遲關閉並觸發確認
+            setTimeout(() => {
+                toast.style.display = 'none';
+                closeCameraScanner();
+                
+                // 根據目標輸入框觸發對應的確認函數
+                if (currentTargetInput) {
+                    const id = currentTargetInput.id;
+                    if (id === 'picking-scan') confirmPickingScan();
+                    else if (id === 'inbound-scan') confirmInboundScan();
+                    else if (id === 'dispatch-scan') confirmDispatchScan();
+                    else if (id === 'query-input') doInventoryQuery();
+                }
+            }, 800);
+        }
+        
+        // 手動輸入提交
+        window.submitManualBarcode = function() {
+            const input = document.getElementById('manual-barcode-input');
+            const barcode = input.value.trim();
+            if (!barcode) return;
+            
+            handleScanResult(barcode);
+            input.value = '';
+        };
+        
+        // Enter 鍵提交手動輸入
+        document.getElementById('manual-barcode-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitManualBarcode();
+            }
+        });
+        
+        // ==================== 原有功能 ====================
+        
         // 更新 Badge 數量
         function updateBadges() {
             // 揀貨
@@ -768,6 +1119,9 @@
         }
         
         function goBack() {
+            // 關閉相機掃描（如果開啟）
+            closeCameraScanner();
+            
             document.querySelectorAll('.func-page').forEach(p => p.classList.remove('active'));
             document.getElementById('app-main').classList.add('active');
         }
@@ -892,6 +1246,7 @@
             if (!found) {
                 result.className = 'scan-result error';
                 result.innerText = '❌ 找不到：' + scanned;
+                playErrorSound();
                 input.select();
                 return;
             }
@@ -918,7 +1273,8 @@
             input.value = '';
             input.focus();
             
-            // 震動反饋
+            // 音效 + 震動
+            playSuccessSound();
             if (navigator.vibrate) navigator.vibrate(100);
         };
         
@@ -999,10 +1355,12 @@
                     result.innerText = '✓ 入庫確認：' + task.productName + ' @ ' + task.locationId;
                     
                     loadInboundTasks();
+                    playSuccessSound();
                     if (navigator.vibrate) navigator.vibrate(100);
                 } catch (err) {
                     result.className = 'scan-result error';
                     result.innerText = '❌ 確認失敗：' + err.message;
+                    playErrorSound();
                 }
             } else {
                 // 檢查庫存是否已存在
@@ -1011,9 +1369,11 @@
                 if (found) {
                     result.className = 'scan-result success';
                     result.innerText = '✓ 已存在：' + found.productName + ' @ ' + found.locationId;
+                    playSuccessSound();
                 } else {
                     result.className = 'scan-result error';
                     result.innerText = '❌ 找不到：' + scanned;
+                    playErrorSound();
                 }
             }
             
@@ -1103,6 +1463,7 @@
             if (!found) {
                 result.className = 'scan-result error';
                 result.innerText = '❌ 找不到：' + scanned;
+                playErrorSound();
                 input.select();
                 return;
             }
@@ -1128,6 +1489,8 @@
             renderDispatchList();
             input.value = '';
             input.focus();
+            
+            playSuccessSound();
             if (navigator.vibrate) navigator.vibrate(100);
         };
         
@@ -1206,6 +1569,46 @@
                 if (active.id === 'query-input') doInventoryQuery();
             }
         });
+        
+        // 條碼槍全局監聽
+        let barcodeBuffer = '';
+        let barcodeTimeout = null;
+        
+        document.addEventListener('keydown', function(e) {
+            const active = document.activeElement;
+            const isInputField = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+            
+            // 如果不在輸入框中，監聽條碼槍
+            if (!isInputField) {
+                if (e.key === 'Enter' && barcodeBuffer.length > 0) {
+                    // 找到當前可見的掃描輸入框
+                    const visibleInputs = ['picking-scan', 'inbound-scan', 'dispatch-scan', 'query-input'];
+                    for (const id of visibleInputs) {
+                        const input = document.getElementById(id);
+                        if (input && input.offsetParent !== null) {
+                            input.value = barcodeBuffer;
+                            input.focus();
+                            // 觸發對應確認
+                            if (id === 'picking-scan') confirmPickingScan();
+                            else if (id === 'inbound-scan') confirmInboundScan();
+                            else if (id === 'dispatch-scan') confirmDispatchScan();
+                            else if (id === 'query-input') doInventoryQuery();
+                            break;
+                        }
+                    }
+                    barcodeBuffer = '';
+                    clearTimeout(barcodeTimeout);
+                } else if (e.key.length === 1) {
+                    barcodeBuffer += e.key;
+                    clearTimeout(barcodeTimeout);
+                    barcodeTimeout = setTimeout(() => {
+                        barcodeBuffer = '';
+                    }, 200);
+                }
+            }
+        });
+        
+        console.log('✅ Terry WMS 手機版載入完成 (含相機掃描)');
     </script>
 </body>
 </html>
