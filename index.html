@@ -6,1609 +6,551 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
-    <title>Terry WMS 手機版</title>
-    <link rel="manifest" href="data:application/json,{'name':'Terry WMS','short_name':'WMS','start_url':'.','display':'standalone','background_color':'%230f172a','theme_color':'%230f172a'}">
+    <title>Terry WMS 手機版 v3.0</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- 🆕 條碼掃描庫 QuaggaJS -->
     <script src="https://unpkg.com/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
-    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
-            color: #fff;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #fff; min-height: 100vh; overflow-x: hidden; }
         
         /* 登入頁 */
-        .login-page {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
-        }
+        .login-page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); }
         .login-logo { font-size: 48px; color: #3b82f6; margin-bottom: 10px; }
         .login-title { font-size: 28px; font-weight: bold; margin-bottom: 5px; }
         .login-subtitle { color: #64748b; font-size: 14px; margin-bottom: 30px; }
-        .login-box {
-            width: 100%;
-            max-width: 320px;
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid #334155;
-            border-radius: 16px;
-            padding: 24px;
-        }
-        .login-input {
-            width: 100%;
-            padding: 14px 16px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 16px;
-            margin-bottom: 12px;
-        }
+        .login-box { width: 100%; max-width: 320px; background: rgba(30, 41, 59, 0.8); border: 1px solid #334155; border-radius: 16px; padding: 24px; }
+        .login-input { width: 100%; padding: 14px 16px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; color: #fff; font-size: 16px; margin-bottom: 12px; }
         .login-input:focus { outline: none; border-color: #3b82f6; }
-        .login-btn {
-            width: 100%;
-            padding: 14px;
-            background: #3b82f6;
-            border: none;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        .login-btn { width: 100%; padding: 14px; background: #3b82f6; border: none; border-radius: 10px; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; }
         .login-btn:active { background: #2563eb; }
         .login-error { color: #f87171; font-size: 14px; margin-bottom: 12px; display: none; }
         
         /* 主頁面 */
         .app-container { display: none; min-height: 100vh; flex-direction: column; }
         .app-container.active { display: flex; }
-        
-        /* 頂部 */
-        .app-header {
-            background: #1e293b;
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #334155;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+        .app-header { background: #1e293b; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155; position: sticky; top: 0; z-index: 100; }
         .app-logo { display: flex; align-items: center; gap: 8px; }
         .app-logo i { color: #3b82f6; font-size: 20px; }
         .app-logo span { font-weight: bold; font-size: 16px; }
         .user-info { display: flex; align-items: center; gap: 8px; }
         .user-name { font-size: 12px; color: #94a3b8; }
-        .logout-btn {
-            background: rgba(239, 68, 68, 0.2);
-            border: none;
-            color: #f87171;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-        }
+        .user-badge { font-size: 10px; background: #3b82f6; padding: 2px 6px; border-radius: 4px; }
+        .logout-btn { background: rgba(239, 68, 68, 0.2); border: none; color: #f87171; padding: 6px 10px; border-radius: 6px; font-size: 12px; }
         
         /* 主選單 */
-        .main-menu {
-            flex: 1;
-            padding: 20px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        .menu-card {
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-            border: 1px solid #475569;
-            border-radius: 16px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .menu-card:active {
-            transform: scale(0.98);
-        }
+        .main-menu { flex: 1; padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; }
+        .menu-card { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border: 1px solid #475569; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; cursor: pointer; transition: transform 0.2s; }
+        .menu-card:active { transform: scale(0.98); }
         .menu-card.picking { border-color: #3b82f6; }
         .menu-card.inbound { border-color: #10b981; }
         .menu-card.dispatch { border-color: #f59e0b; }
         .menu-card.query { border-color: #8b5cf6; }
-        
-        .menu-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
+        .menu-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; position: relative; }
         .menu-card.picking .menu-icon { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
         .menu-card.inbound .menu-icon { background: rgba(16, 185, 129, 0.2); color: #10b981; }
         .menu-card.dispatch .menu-icon { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
         .menu-card.query .menu-icon { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
-        
         .menu-text h3 { font-size: 18px; margin-bottom: 4px; }
         .menu-text p { font-size: 13px; color: #94a3b8; }
         .menu-arrow { margin-left: auto; color: #475569; font-size: 20px; }
-        .menu-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #ef4444;
-            color: #fff;
-            font-size: 12px;
-            font-weight: bold;
-            min-width: 20px;
-            height: 20px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 6px;
-        }
-        .menu-icon { position: relative; }
+        .menu-badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; font-size: 12px; font-weight: bold; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
         
         /* 功能頁面 */
-        .func-page {
-            display: none;
-            flex-direction: column;
-            min-height: 100vh;
-            background: #0f172a;
-        }
+        .func-page { display: none; flex-direction: column; min-height: 100vh; background: #0f172a; }
         .func-page.active { display: flex; }
-        
-        .func-header {
-            background: #1e293b;
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-bottom: 1px solid #334155;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .back-btn {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 20px;
-            padding: 8px;
-            cursor: pointer;
-        }
+        .func-header { background: #1e293b; padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #334155; position: sticky; top: 0; z-index: 100; }
+        .back-btn { background: none; border: none; color: #fff; font-size: 20px; padding: 8px; }
         .func-title { font-size: 18px; font-weight: bold; }
         
         /* 掃描區 */
-        .scan-section {
-            background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
-            padding: 20px 16px;
-            text-align: center;
-        }
-        .scan-input-wrap {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-        .scan-input {
-            flex: 1;
-            padding: 14px 16px;
-            background: #0f172a;
-            border: 2px solid #3b82f6;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 18px;
-            text-align: center;
-        }
+        .scan-section { background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%); padding: 20px 16px; }
+        .scan-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .scan-input { flex: 1; padding: 14px 16px; background: #0f172a; border: 2px solid #3b82f6; border-radius: 10px; color: #fff; font-size: 18px; text-align: center; }
         .scan-input:focus { outline: none; border-color: #60a5fa; }
-        .scan-btn {
-            padding: 14px 20px;
-            background: #3b82f6;
-            border: none;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 16px;
-        }
+        .scan-btn { padding: 14px 20px; background: #3b82f6; border: none; border-radius: 10px; color: #fff; font-size: 16px; }
         .scan-btn:active { background: #2563eb; }
+        .scan-btn.camera { background: #8b5cf6; }
+        .scan-hint { color: #64748b; font-size: 13px; text-align: center; }
+        .scan-result { margin-top: 12px; padding: 12px; border-radius: 8px; font-size: 14px; white-space: pre-line; }
+        .scan-result.success { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .scan-result.error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .scan-result.warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .scan-result.info { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
         
-        /* 🆕 相機掃描按鈕 */
-        .camera-btn {
-            padding: 14px 16px;
-            background: #10b981;
-            border: none;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 18px;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-        .camera-btn:active { background: #059669; }
+        /* 步驟指示器 */
+        .step-indicator { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 16px; padding: 12px; background: rgba(15, 23, 42, 0.8); border-radius: 12px; }
+        .step-badge { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; background: #334155; color: #64748b; }
+        .step-badge.active { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; box-shadow: 0 0 12px rgba(59, 130, 246, 0.5); }
+        .step-badge.done { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+        .step-text { font-size: 12px; color: #94a3b8; }
+        .step-text.active { color: #3b82f6; font-weight: bold; }
+        .step-text.done { color: #22c55e; }
+        .step-arrow { color: #475569; }
         
-        .scan-hint { color: #64748b; font-size: 13px; }
-        .scan-result {
-            margin-top: 12px;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 14px;
-            display: none;
-        }
-        .scan-result.success { display: block; background: rgba(16, 185, 129, 0.2); color: #10b981; }
-        .scan-result.error { display: block; background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        /* 任務資訊卡 */
+        .task-info-card { background: linear-gradient(135deg, #1e3a5f, #1e293b); border: 1px solid #3b82f6; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+        .task-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .task-row:last-child { border-bottom: none; }
+        .task-row .label { color: #94a3b8; font-size: 13px; }
+        .task-row .value { color: white; font-weight: 600; font-size: 14px; }
+        .task-row.highlight { background: rgba(34, 197, 94, 0.1); margin: 8px -16px; padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .task-row.highlight .label { color: #22c55e; font-weight: bold; }
+        .task-row.highlight .value { color: #22c55e; font-size: 18px; }
+        .task-row.warning { background: rgba(245, 158, 11, 0.1); margin: 8px -16px; padding: 12px 16px; border-radius: 8px; }
+        .task-row.warning .label { color: #f59e0b; }
+        .task-row.warning .value { color: #f59e0b; }
+        
+        /* 數量輸入 */
+        .qty-input-section { background: rgba(15, 23, 42, 0.8); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+        .qty-label { font-size: 14px; color: #94a3b8; margin-bottom: 8px; text-align: center; }
+        .qty-display { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px; }
+        .qty-btn { width: 48px; height: 48px; border-radius: 12px; border: none; font-size: 24px; font-weight: bold; cursor: pointer; }
+        .qty-btn.minus { background: #ef4444; color: white; }
+        .qty-btn.plus { background: #22c55e; color: white; }
+        .qty-btn:active { transform: scale(0.95); }
+        .qty-value { font-size: 36px; font-weight: bold; color: white; min-width: 80px; text-align: center; }
+        .qty-hint { font-size: 12px; color: #64748b; text-align: center; }
+        .qty-diff { font-size: 14px; color: #f59e0b; text-align: center; margin-top: 8px; }
+        
+        /* 差異原因 */
+        .diff-reason-section { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 16px; display: none; }
+        .diff-reason-section.show { display: block; }
+        .diff-reason-title { color: #f87171; font-size: 14px; margin-bottom: 12px; }
+        .diff-reason-options { display: flex; flex-wrap: wrap; gap: 8px; }
+        .diff-reason-btn { padding: 8px 16px; border: 1px solid #475569; border-radius: 8px; background: transparent; color: #94a3b8; font-size: 13px; cursor: pointer; }
+        .diff-reason-btn.selected { border-color: #ef4444; background: rgba(239, 68, 68, 0.2); color: #f87171; }
         
         /* 清單區 */
-        .list-section {
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-        }
-        .list-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
+        .list-section { flex: 1; padding: 16px; overflow-y: auto; }
+        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .list-header h4 { font-size: 16px; color: #94a3b8; }
         .list-progress { font-size: 14px; color: #10b981; font-weight: bold; }
+        .list-item { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+        .list-item.completed { opacity: 0.6; border-color: #22c55e; }
+        .list-item.current { border-color: #3b82f6; box-shadow: 0 0 12px rgba(59, 130, 246, 0.3); }
+        .list-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .list-item-title { font-weight: bold; font-size: 15px; }
+        .list-item-status { font-size: 12px; padding: 4px 8px; border-radius: 6px; }
+        .list-item-status.pending { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .list-item-status.done { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .list-item-status.current { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .list-item-detail { font-size: 13px; color: #94a3b8; }
+        .list-item-location { font-size: 14px; color: #3b82f6; font-weight: bold; margin-top: 6px; }
         
-        .list-item {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 10px;
-        }
-        .list-item.completed { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
-        .list-item.shortage { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        /* 動作按鈕 */
+        .action-btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 12px; }
+        .action-btn.primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+        .action-btn.success { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .action-btn:active:not(:disabled) { transform: scale(0.98); }
+        .cancel-btn { width: 100%; padding: 12px; background: transparent; border: 1px solid #475569; border-radius: 8px; color: #94a3b8; font-size: 14px; cursor: pointer; margin-top: 12px; }
         
-        .item-row { display: flex; justify-content: space-between; align-items: center; }
-        .item-location { font-size: 20px; font-weight: bold; color: #3b82f6; font-family: monospace; }
-        .item-status { font-size: 12px; padding: 4px 8px; border-radius: 6px; }
-        .item-status.pending { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
-        .item-status.done { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-        .item-status.shortage { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        /* 操作員資訊 */
+        .operator-info { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 12px; }
+        .operator-info i { color: #3b82f6; }
+        .operator-info .name { color: #3b82f6; font-weight: bold; }
+        .operator-info .time { color: #64748b; margin-left: auto; }
         
-        .item-product { font-size: 15px; color: #fff; margin: 8px 0 4px; }
-        .item-detail { font-size: 13px; color: #64748b; }
-        .item-qty { font-size: 24px; font-weight: bold; color: #fbbf24; text-align: right; }
+        /* FIFO 警告 */
+        .fifo-warning { background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: 12px; padding: 16px; margin-bottom: 16px; text-align: center; display: none; }
+        .fifo-warning-icon { font-size: 32px; color: #ef4444; margin-bottom: 8px; }
+        .fifo-warning-title { color: #f87171; font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+        .fifo-warning-text { color: #94a3b8; font-size: 13px; }
         
-        /* 選擇器 */
-        .selector-section { padding: 16px; }
-        .selector-label { font-size: 14px; color: #94a3b8; margin-bottom: 8px; }
-        .selector-input {
-            width: 100%;
-            padding: 14px 16px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 16px;
-        }
+        /* Toast */
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: bold; z-index: 10000; animation: toastIn 0.3s ease; }
+        .toast.success { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+        .toast.error { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
         
-        /* 庫存查詢結果 */
-        .query-result {
-            padding: 16px;
-        }
-        .result-card {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-        }
-        .result-product { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
-        .result-spec { font-size: 14px; color: #64748b; margin-bottom: 12px; }
-        .result-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-top: 1px solid #334155;
-        }
-        .result-loc { font-family: monospace; color: #3b82f6; font-weight: bold; }
-        .result-qty { color: #fbbf24; font-weight: bold; }
-        
-        /* 底部操作 */
-        .bottom-actions {
-            padding: 16px;
-            background: #1e293b;
-            border-top: 1px solid #334155;
-        }
-        .action-btn {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-        .action-btn:last-child { margin-bottom: 0; }
-        .action-btn.primary { background: #3b82f6; color: #fff; }
-        .action-btn.success { background: #10b981; color: #fff; }
-        .action-btn.secondary { background: #334155; color: #fff; }
-        .action-btn:active { opacity: 0.8; }
-        
-        /* 空狀態 */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #64748b;
-        }
-        .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-        .empty-state p { font-size: 14px; }
-        
-        /* 載入中 */
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #64748b;
-        }
-        .loading i { font-size: 32px; animation: spin 1s linear infinite; }
+        .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: #64748b; }
+        .loading i { animation: spin 1s linear infinite; margin-right: 8px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        
-        /* 隱藏 */
-        .hidden { display: none !important; }
-        
-        /* 🆕 相機掃描 Modal 樣式 */
-        #camera-scanner-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #000;
-            z-index: 10000;
-            display: none;
-            flex-direction: column;
-        }
-        #camera-scanner-modal.active { display: flex; }
-        
-        #camera-scanner-modal .scanner-header {
-            background: #1e293b;
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            color: #fff;
-        }
-        #camera-scanner-modal .scanner-header h3 {
-            margin: 0;
-            font-size: 18px;
-        }
-        #camera-scanner-modal .close-btn {
-            background: rgba(239, 68, 68, 0.2);
-            border: none;
-            color: #f87171;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        #camera-scanner-modal .scanner-viewport {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-            background: #000;
-        }
-        #camera-scanner-modal .scanner-viewport video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        #camera-scanner-modal .scanner-viewport canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        #camera-scanner-modal .scan-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 280px;
-            height: 150px;
-            border: 3px solid #3b82f6;
-            border-radius: 12px;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
-            pointer-events: none;
-        }
-        #camera-scanner-modal .scan-line {
-            position: absolute;
-            top: 0;
-            left: 10px;
-            right: 10px;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
-            animation: scanLine 2s linear infinite;
-        }
-        @keyframes scanLine {
-            0% { top: 10px; }
-            50% { top: calc(100% - 12px); }
-            100% { top: 10px; }
-        }
-        #camera-scanner-modal .scan-hint-overlay {
-            position: absolute;
-            bottom: 30px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            color: #fff;
-            font-size: 14px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-        }
-        #camera-scanner-modal .scan-result-toast {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            background: #10b981;
-            color: #fff;
-            padding: 12px 16px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: bold;
-            display: none;
-            animation: toastIn 0.3s ease;
-        }
-        @keyframes toastIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        #camera-scanner-modal .manual-input {
-            background: #1e293b;
-            padding: 12px 16px;
-            display: flex;
-            gap: 10px;
-        }
-        #camera-scanner-modal .manual-input input {
-            flex: 1;
-            padding: 12px;
-            background: #0f172a;
-            border: 2px solid #334155;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 16px;
-        }
-        #camera-scanner-modal .manual-input input:focus {
-            outline: none;
-            border-color: #3b82f6;
-        }
-        #camera-scanner-modal .manual-input button {
-            padding: 12px 20px;
-            background: #3b82f6;
-            border: none;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
-    <!-- 登入頁 -->
-    <div id="login-page" class="login-page">
+
+    <!-- 登入頁面 -->
+    <div class="login-page" id="login-page">
         <i class="fa-solid fa-warehouse login-logo"></i>
         <h1 class="login-title">Terry WMS</h1>
-        <p class="login-subtitle">倉儲管理系統 - 手機版</p>
+        <p class="login-subtitle">倉儲管理系統 手機版 v3.0</p>
         <div class="login-box">
-            <input type="email" id="login-email" class="login-input" placeholder="Email" value="admin@bafang.com">
-            <input type="password" id="login-pwd" class="login-input" placeholder="密碼" value="123456">
-            <div id="login-error" class="login-error"></div>
-            <button onclick="doLogin()" class="login-btn">
-                <i class="fa-solid fa-right-to-bracket"></i> 登入
-            </button>
+            <div class="login-error" id="login-error">帳號或密碼錯誤</div>
+            <input type="email" class="login-input" id="login-email" placeholder="電子郵件">
+            <input type="password" class="login-input" id="login-password" placeholder="密碼">
+            <button class="login-btn" onclick="doLogin()"><i class="fa-solid fa-right-to-bracket"></i> 登入</button>
         </div>
     </div>
     
-    <!-- 主頁面 -->
-    <div id="app-main" class="app-container">
+    <!-- 主應用 -->
+    <div class="app-container" id="app-container">
         <header class="app-header">
-            <div class="app-logo">
-                <i class="fa-solid fa-warehouse"></i>
-                <span>Terry WMS</span>
-            </div>
+            <div class="app-logo"><i class="fa-solid fa-warehouse"></i><span>Terry WMS</span></div>
             <div class="user-info">
-                <span class="user-name" id="display-user">-</span>
-                <button onclick="doLogout()" class="logout-btn">
-                    <i class="fa-solid fa-power-off"></i>
-                </button>
+                <div><div class="user-name" id="user-display-name">操作員</div><div class="user-badge">堆高機手</div></div>
+                <button class="logout-btn" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </header>
-        
-        <div class="main-menu">
-            <div class="menu-card picking" onclick="openPage('picking')">
-                <div class="menu-icon">
-                    <i class="fa-solid fa-barcode"></i>
-                    <span class="menu-badge" id="badge-picking" style="display:none">0</span>
-                </div>
-                <div class="menu-text">
-                    <h3>揀貨掃描</h3>
-                    <p>波次揀貨確認</p>
-                </div>
+        <div class="main-menu" id="main-menu">
+            <div class="menu-card picking" onclick="showPage('picking')">
+                <div class="menu-icon"><i class="fa-solid fa-dolly"></i><span class="menu-badge" id="badge-picking" style="display:none">0</span></div>
+                <div class="menu-text"><h3>揀貨掃描</h3><p>波次揀貨作業</p></div>
                 <i class="fa-solid fa-chevron-right menu-arrow"></i>
             </div>
-            
-            <div class="menu-card inbound" onclick="openPage('inbound')">
-                <div class="menu-icon">
-                    <i class="fa-solid fa-boxes-stacked"></i>
-                    <span class="menu-badge" id="badge-inbound" style="display:none">0</span>
-                </div>
-                <div class="menu-text">
-                    <h3>入庫確認</h3>
-                    <p>掃描板號確認入庫</p>
-                </div>
+            <div class="menu-card inbound" onclick="showPage('inbound')">
+                <div class="menu-icon"><i class="fa-solid fa-truck-ramp-box"></i><span class="menu-badge" id="badge-inbound" style="display:none">0</span></div>
+                <div class="menu-text"><h3>入庫確認</h3><p>掃描入庫上架</p></div>
                 <i class="fa-solid fa-chevron-right menu-arrow"></i>
             </div>
-            
-            <div class="menu-card dispatch" onclick="openPage('dispatch')">
-                <div class="menu-icon">
-                    <i class="fa-solid fa-truck-moving"></i>
-                    <span class="menu-badge" id="badge-dispatch" style="display:none">0</span>
-                </div>
-                <div class="menu-text">
-                    <h3>調度執行</h3>
-                    <p>移位/合併作業</p>
-                </div>
+            <div class="menu-card dispatch" onclick="showPage('dispatch')">
+                <div class="menu-icon"><i class="fa-solid fa-arrows-turn-to-dots"></i><span class="menu-badge" id="badge-dispatch" style="display:none">0</span></div>
+                <div class="menu-text"><h3>調度執行</h3><p>移位與合併作業</p></div>
                 <i class="fa-solid fa-chevron-right menu-arrow"></i>
             </div>
-            
-            <div class="menu-card query" onclick="openPage('query')">
+            <div class="menu-card query" onclick="showPage('query')">
                 <div class="menu-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
-                <div class="menu-text">
-                    <h3>庫存快查</h3>
-                    <p>查詢品項位置</p>
-                </div>
+                <div class="menu-text"><h3>庫存快查</h3><p>查詢庫存位置</p></div>
                 <i class="fa-solid fa-chevron-right menu-arrow"></i>
             </div>
         </div>
     </div>
     
-    <!-- 揀貨掃描頁 -->
-    <div id="page-picking" class="func-page">
-        <header class="func-header">
-            <button class="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
-            <span class="func-title">揀貨掃描</span>
-        </header>
-        
-        <div class="selector-section">
-            <div class="selector-label">選擇波次</div>
-            <select id="picking-wave-select" class="selector-input" onchange="loadPickingWave()">
-                <option value="">-- 請選擇 --</option>
-            </select>
-        </div>
-        
-        <div class="scan-section" id="picking-scan-area" style="display:none">
-            <div class="scan-input-wrap">
-                <input type="text" id="picking-scan" class="scan-input" placeholder="掃描儲位或板號" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-                <button class="camera-btn" onclick="openCameraScanner('picking-scan')"><i class="fa-solid fa-camera"></i></button>
-                <button class="scan-btn" onclick="confirmPickingScan()"><i class="fa-solid fa-check"></i></button>
-            </div>
-            <p class="scan-hint">📷 點擊相機按鈕開啟掃描 | 或使用條碼槍</p>
-            <div id="picking-scan-result" class="scan-result"></div>
-        </div>
-        
-        <div class="list-section" id="picking-list-area">
-            <div class="list-header">
-                <h4>揀貨清單</h4>
-                <span class="list-progress" id="picking-progress">0/0</span>
-            </div>
-            <div id="picking-list">
-                <div class="empty-state">
-                    <i class="fa-solid fa-clipboard-list"></i>
-                    <p>請先選擇波次</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bottom-actions" id="picking-actions" style="display:none">
-            <button class="action-btn success" onclick="completePickingWave()">
-                <i class="fa-solid fa-flag-checkered"></i> 完成波次
-            </button>
-        </div>
-    </div>
-    
-    <!-- 入庫確認頁 -->
+    <!-- 入庫確認頁面 -->
     <div id="page-inbound" class="func-page">
         <header class="func-header">
             <button class="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
             <span class="func-title">入庫確認</span>
         </header>
-        
         <div class="scan-section">
-            <div class="scan-input-wrap">
-                <input type="text" id="inbound-scan" class="scan-input" placeholder="掃描入庫板號" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-                <button class="camera-btn" onclick="openCameraScanner('inbound-scan')"><i class="fa-solid fa-camera"></i></button>
-                <button class="scan-btn" onclick="confirmInboundScan()"><i class="fa-solid fa-check"></i></button>
+            <div class="operator-info">
+                <i class="fa-solid fa-user"></i>
+                <span>操作員: <span class="name" id="inbound-operator">-</span></span>
+                <span class="time" id="inbound-time">-</span>
             </div>
-            <p class="scan-hint">📷 點擊相機按鈕開啟掃描 | 或使用條碼槍</p>
+            
+            <!-- Step 1: 掃描板號 -->
+            <div id="inbound-step1">
+                <div class="step-indicator">
+                    <span class="step-badge active">1</span><span class="step-text active">掃描板號</span>
+                    <span class="step-arrow">→</span>
+                    <span class="step-badge">2</span><span class="step-text">掃描儲位</span>
+                </div>
+                <div class="scan-row">
+                    <input type="text" id="inbound-pallet-scan" class="scan-input" placeholder="掃描入庫板號">
+                    <button class="scan-btn" onclick="confirmInboundPallet()"><i class="fa-solid fa-check"></i></button>
+                </div>
+                <p class="scan-hint">第一步：掃描標籤上的板號條碼</p>
+            </div>
+            
+            <!-- Step 2: 掃描儲位 -->
+            <div id="inbound-step2" style="display:none;">
+                <div class="step-indicator">
+                    <span class="step-badge done">✓</span><span class="step-text done">板號已掃</span>
+                    <span class="step-arrow">→</span>
+                    <span class="step-badge active">2</span><span class="step-text active">掃描儲位</span>
+                </div>
+                <div class="task-info-card">
+                    <div class="task-row"><span class="label">品名</span><span class="value" id="inbound-product">-</span></div>
+                    <div class="task-row"><span class="label">數量</span><span class="value" id="inbound-qty">-</span></div>
+                    <div class="task-row highlight"><span class="label">📍 指定儲位</span><span class="value" id="inbound-target-location">-</span></div>
+                </div>
+                <div class="scan-row">
+                    <input type="text" id="inbound-location-scan" class="scan-input" placeholder="掃描儲位條碼確認">
+                    <button class="scan-btn" onclick="confirmInboundLocation()"><i class="fa-solid fa-check"></i></button>
+                </div>
+                <p class="scan-hint">第二步：到達儲位後，掃描儲位條碼確認</p>
+                <button class="cancel-btn" onclick="resetInboundStep()"><i class="fa-solid fa-rotate-left"></i> 重新掃描</button>
+            </div>
             <div id="inbound-scan-result" class="scan-result"></div>
         </div>
-        
         <div class="list-section">
-            <div class="list-header">
-                <h4>今日入庫記錄</h4>
-                <span class="list-progress" id="inbound-count">0 筆</span>
-            </div>
-            <div id="inbound-list">
-                <div class="loading"><i class="fa-solid fa-spinner"></i></div>
-            </div>
+            <div class="list-header"><h4>待入庫任務</h4><span class="list-progress" id="inbound-count">0 筆</span></div>
+            <div id="inbound-list"><div class="loading"><i class="fa-solid fa-spinner"></i> 載入中...</div></div>
         </div>
     </div>
     
-    <!-- 調度執行頁 -->
+    <!-- 揀貨頁面 -->
+    <div id="page-picking" class="func-page">
+        <header class="func-header">
+            <button class="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+            <span class="func-title">揀貨掃描</span>
+        </header>
+        <div class="scan-section">
+            <div class="operator-info">
+                <i class="fa-solid fa-user"></i>
+                <span>操作員: <span class="name" id="picking-operator">-</span></span>
+                <span class="time" id="picking-time">-</span>
+            </div>
+            
+            <!-- FIFO 警告 -->
+            <div id="fifo-warning" class="fifo-warning">
+                <div class="fifo-warning-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="fifo-warning-title">請依照順序揀貨！</div>
+                <div class="fifo-warning-text" id="fifo-warning-text">請先揀取第一項</div>
+            </div>
+            
+            <!-- Step 1: 掃描儲位 -->
+            <div id="picking-step1">
+                <div class="step-indicator">
+                    <span class="step-badge active">1</span><span class="step-text active">掃描儲位</span>
+                    <span class="step-arrow">→</span>
+                    <span class="step-badge">2</span><span class="step-text">掃描板號</span>
+                    <span class="step-arrow">→</span>
+                    <span class="step-badge">3</span><span class="step-text">確認數量</span>
+                </div>
+                <div class="task-info-card" id="picking-current-task" style="display:none;">
+                    <div class="task-row highlight"><span class="label">📍 前往儲位</span><span class="value" id="picking-target-location">-</span></div>
+                    <div class="task-row"><span class="label">品名</span><span class="value" id="picking-target-product">-</span></div>
+                    <div class="task-row"><span class="label">需揀數量</span><span class="value" id="picking-target-qty">-</span></div>
+                </div>
+                <div class="scan-row">
+                    <input type="text" id="picking-location-scan" class="scan-input" placeholder="掃描儲位條碼">
+                    <button class="scan-btn" onclick="confirmPickingLocation()"><i class="fa-solid fa-check"></i></button>
+                </div>
+                <p class="scan-hint">第一步：到達儲位後，掃描儲位條碼</p>
+            </div>
+            
+            <!-- Step 2: 掃描板號 -->
+            <div id="picking-step2" style="display:none;">
+                <div class="step-indicator">
+                    <span class="step-badge done">✓</span><span class="step-text done">儲位確認</span>
+                    <span class="step-arrow">→</span>
+                    <span class="step-badge active">2</span><span class="step-text active">掃描板號</span>
+                    <span class="step-arrow">→</span>
+                    <span class="step-badge">3</span><span class="step-text">確認數量</span>
+                </div>
+                <div class="task-info-card">
+                    <div class="task-row"><span class="label">已確認儲位</span><span class="value" id="picking-confirmed-location">-</span></div>
+                    <div class="task-row highlight"><span class="label">📦 請掃描板號</span><span class="value" id="picking-target-pallet">-</span></div>
+                </div>
+                <div class="scan-row">
+                    <input type="text" id="picking-pallet-scan" class="scan-input" placeholder="掃描板號條碼">
+                    <button class="scan-btn" onclick="confirmPickingPallet()"><i class="fa-solid fa-check"></i></button>
+                </div>
+                <p class="scan-hint">第二步：掃描要揀取的板號</p>
+                <button class="cancel-btn" onclick="resetPickingStep()"><i class="fa-solid fa-rotate-left"></i> 重新掃描儲位</button>
+            </div>
+            
+            <!-- Step 3: 確認數量 -->
+            <div id="picking-step3" style="display:none;">
+                <div class="step-indicator">
+                    <span class="step-badge done">✓</span><span class="step-text done">儲位確認</span>
+                    <span class="step-arrow">→</span>
+                    <span class="step-badge done">✓</span><span class="step-text done">板號確認</span>
+                    <span class="step-arrow">→</span>
+                    <span class="step-badge active">3</span><span class="step-text active">確認數量</span>
+                </div>
+                <div class="task-info-card">
+                    <div class="task-row"><span class="label">儲位</span><span class="value" id="qty-confirmed-location">-</span></div>
+                    <div class="task-row"><span class="label">板號</span><span class="value" id="qty-confirmed-pallet">-</span></div>
+                    <div class="task-row warning"><span class="label">系統要求數量</span><span class="value" id="qty-required">-</span></div>
+                </div>
+                <div class="qty-input-section">
+                    <div class="qty-label">實際揀取數量</div>
+                    <div class="qty-display">
+                        <button class="qty-btn minus" onclick="adjustQty(-1)">−</button>
+                        <span class="qty-value" id="picking-actual-qty">0</span>
+                        <button class="qty-btn plus" onclick="adjustQty(1)">+</button>
+                    </div>
+                    <div class="qty-hint">點擊 +/- 調整數量</div>
+                    <div class="qty-diff" id="qty-diff" style="display:none;"></div>
+                </div>
+                <div id="diff-reason-section" class="diff-reason-section">
+                    <div class="diff-reason-title"><i class="fa-solid fa-exclamation-triangle"></i> 數量不符，請選擇原因：</div>
+                    <div class="diff-reason-options">
+                        <button class="diff-reason-btn" onclick="selectDiffReason('破損')">破損</button>
+                        <button class="diff-reason-btn" onclick="selectDiffReason('短少')">短少</button>
+                        <button class="diff-reason-btn" onclick="selectDiffReason('盤差')">盤差</button>
+                        <button class="diff-reason-btn" onclick="selectDiffReason('品質問題')">品質問題</button>
+                        <button class="diff-reason-btn" onclick="selectDiffReason('其他')">其他</button>
+                    </div>
+                </div>
+                <button class="action-btn success" onclick="completePickingItem()"><i class="fa-solid fa-check"></i> 確認揀貨</button>
+                <button class="cancel-btn" onclick="resetPickingStep()"><i class="fa-solid fa-rotate-left"></i> 重新掃描</button>
+            </div>
+            <div id="picking-scan-result" class="scan-result"></div>
+        </div>
+        <div class="list-section">
+            <div class="list-header"><h4>揀貨清單</h4><span class="list-progress" id="picking-progress">0/0</span></div>
+            <div id="picking-list"><div class="loading"><i class="fa-solid fa-spinner"></i> 載入中...</div></div>
+        </div>
+    </div>
+    
+    <!-- 調度執行頁面 -->
     <div id="page-dispatch" class="func-page">
         <header class="func-header">
             <button class="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
             <span class="func-title">調度執行</span>
         </header>
-        
-        <div class="selector-section">
-            <div class="selector-label">選擇工單</div>
-            <select id="dispatch-order-select" class="selector-input" onchange="loadDispatchOrder()">
-                <option value="">-- 請選擇 --</option>
-            </select>
-        </div>
-        
-        <div class="scan-section" id="dispatch-scan-area" style="display:none">
-            <div class="scan-input-wrap">
-                <input type="text" id="dispatch-scan" class="scan-input" placeholder="掃描板號確認" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-                <button class="camera-btn" onclick="openCameraScanner('dispatch-scan')"><i class="fa-solid fa-camera"></i></button>
-                <button class="scan-btn" onclick="confirmDispatchScan()"><i class="fa-solid fa-check"></i></button>
+        <div class="scan-section">
+            <div class="operator-info">
+                <i class="fa-solid fa-user"></i>
+                <span>操作員: <span class="name" id="dispatch-operator">-</span></span>
+                <span class="time" id="dispatch-time">-</span>
             </div>
-            <p class="scan-hint">📷 點擊相機按鈕開啟掃描 | 或使用條碼槍</p>
+            
+            <!-- Step 1: 掃描板號 -->
+            <div id="dispatch-step1">
+                <div class="step-indicator">
+                    <span class="step-badge active">1</span><span class="step-text active">掃描板號</span>
+                    <span class="step-arrow">→</span>
+                    <span class="step-badge">2</span><span class="step-text">掃描目標儲位</span>
+                </div>
+                <div class="task-info-card" id="dispatch-current-task" style="display:none;">
+                    <div class="task-row"><span class="label">任務類型</span><span class="value" id="dispatch-task-type">-</span></div>
+                    <div class="task-row"><span class="label">來源位置</span><span class="value" id="dispatch-from-location">-</span></div>
+                    <div class="task-row highlight"><span class="label">📍 目標位置</span><span class="value" id="dispatch-to-location">-</span></div>
+                </div>
+                <div class="scan-row">
+                    <input type="text" id="dispatch-pallet-scan" class="scan-input" placeholder="掃描板號">
+                    <button class="scan-btn" onclick="confirmDispatchPallet()"><i class="fa-solid fa-check"></i></button>
+                </div>
+                <p class="scan-hint">第一步：掃描要移動的板號</p>
+            </div>
+            
+            <!-- Step 2: 掃描目標儲位 -->
+            <div id="dispatch-step2" style="display:none;">
+                <div class="step-indicator">
+                    <span class="step-badge done">✓</span><span class="step-text done">板號已掃</span>
+                    <span class="step-arrow">→</span>
+                    <span class="step-badge active">2</span><span class="step-text active">掃描目標儲位</span>
+                </div>
+                <div class="task-info-card">
+                    <div class="task-row"><span class="label">已確認板號</span><span class="value" id="dispatch-confirmed-pallet">-</span></div>
+                    <div class="task-row highlight"><span class="label">📍 請移動到</span><span class="value" id="dispatch-target-confirm">-</span></div>
+                </div>
+                <div class="scan-row">
+                    <input type="text" id="dispatch-location-scan" class="scan-input" placeholder="掃描目標儲位條碼">
+                    <button class="scan-btn" onclick="confirmDispatchLocation()"><i class="fa-solid fa-check"></i></button>
+                </div>
+                <p class="scan-hint">第二步：放置貨物後，掃描儲位條碼確認</p>
+                <button class="cancel-btn" onclick="resetDispatchStep()"><i class="fa-solid fa-rotate-left"></i> 重新掃描</button>
+            </div>
             <div id="dispatch-scan-result" class="scan-result"></div>
         </div>
-        
-        <div class="list-section" id="dispatch-list-area">
-            <div class="list-header">
-                <h4>調度清單</h4>
-                <span class="list-progress" id="dispatch-progress">0/0</span>
-            </div>
-            <div id="dispatch-list">
-                <div class="empty-state">
-                    <i class="fa-solid fa-clipboard-list"></i>
-                    <p>請先選擇工單</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bottom-actions" id="dispatch-actions" style="display:none">
-            <button class="action-btn success" onclick="completeDispatchOrder()">
-                <i class="fa-solid fa-flag-checkered"></i> 完成工單
-            </button>
+        <div class="list-section">
+            <div class="list-header"><h4>調度任務</h4><span class="list-progress" id="dispatch-progress">0/0</span></div>
+            <div id="dispatch-list"><div class="loading"><i class="fa-solid fa-spinner"></i> 載入中...</div></div>
         </div>
     </div>
     
-    <!-- 庫存快查頁 -->
+    <!-- 庫存快查頁面 -->
     <div id="page-query" class="func-page">
         <header class="func-header">
             <button class="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
             <span class="func-title">庫存快查</span>
         </header>
-        
         <div class="scan-section">
-            <div class="scan-input-wrap">
-                <input type="text" id="query-input" class="scan-input" placeholder="輸入品名或板號" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-                <button class="camera-btn" onclick="openCameraScanner('query-input')"><i class="fa-solid fa-camera"></i></button>
+            <div class="scan-row">
+                <input type="text" id="query-input" class="scan-input" placeholder="輸入品名、批號或板號" oninput="doInventoryQuery()">
                 <button class="scan-btn" onclick="doInventoryQuery()"><i class="fa-solid fa-search"></i></button>
             </div>
-            <p class="scan-hint">📷 支援相機掃描條碼 | 或手動輸入關鍵字</p>
         </div>
-        
-        <div class="query-result" id="query-result">
-            <div class="empty-state">
-                <i class="fa-solid fa-box-open"></i>
-                <p>輸入關鍵字搜尋庫存</p>
-            </div>
+        <div class="list-section">
+            <div class="list-header"><h4>查詢結果</h4><span class="list-progress" id="query-count">0 筆</span></div>
+            <div id="query-list"><p style="text-align:center; color:#64748b; padding:40px;">輸入關鍵字搜尋</p></div>
         </div>
     </div>
-    
-    <!-- 🆕 相機掃描 Modal -->
-    <div id="camera-scanner-modal">
-        <div class="scanner-header">
-            <h3>📷 掃描條碼</h3>
-            <button class="close-btn" onclick="closeCameraScanner()">✕ 關閉</button>
-        </div>
-        <div class="scanner-viewport" id="scanner-viewport">
-            <div class="scan-overlay">
-                <div class="scan-line"></div>
-            </div>
-            <p class="scan-hint-overlay">將條碼對準框內</p>
-            <div class="scan-result-toast" id="scan-result-toast"></div>
-        </div>
-        <div class="manual-input">
-            <input type="text" id="manual-barcode-input" placeholder="或手動輸入條碼..." autocomplete="off">
-            <button onclick="submitManualBarcode()">確認</button>
-        </div>
-    </div>
-
-    <!-- Firebase -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-        const firebaseConfig = { 
-            apiKey: "AIzaSyBEWzyRMJQirGbh28ANkE6aN42GzUBuw2s", 
-            authDomain: "terrywms-2345f.firebaseapp.com", 
-            projectId: "terrywms-2345f", 
-            storageBucket: "terrywms-2345f.firebasestorage.app", 
-            messagingSenderId: "75589714942", 
-            appId: "1:75589714942:web:3a7f723c3d1449df78f6af" 
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        
-        window.db = db;
-        window.collection = collection;
-        window.getDocs = getDocs;
-        window.doc = doc;
-        window.updateDoc = updateDoc;
-        window.deleteDoc = deleteDoc;
-        window.addDoc = addDoc;
-        window.query = query;
-        window.where = where;
-        window.orderBy = orderBy;
-        window.onSnapshot = onSnapshot;
-        window.serverTimestamp = serverTimestamp;
-        
-        // 資料
-        window.pallets = [];
-        window.waves = [];
-        window.dispatchOrders = [];
-        window.inboundTasks = [];
-        
-        // 工單數量（用於通知）
-        let prevWaveCount = 0;
-        let prevDispatchCount = 0;
-        let prevInboundCount = 0;
-        
-        // 監聽認證狀態
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('login-page').style.display = 'none';
-                document.getElementById('app-main').classList.add('active');
-                document.getElementById('display-user').innerText = user.email.split('@')[0];
-                initData();
-            } else {
-                document.getElementById('login-page').style.display = 'flex';
-                document.getElementById('app-main').classList.remove('active');
-            }
-        });
-        
-        // 登入
-        window.doLogin = async function() {
-            const email = document.getElementById('login-email').value;
-            const pwd = document.getElementById('login-pwd').value;
-            const errorEl = document.getElementById('login-error');
-            
-            try {
-                errorEl.style.display = 'none';
-                await signInWithEmailAndPassword(auth, email, pwd);
-            } catch (err) {
-                errorEl.style.display = 'block';
-                if (err.code === 'auth/user-not-found') errorEl.innerText = '帳號不存在';
-                else if (err.code === 'auth/wrong-password') errorEl.innerText = '密碼錯誤';
-                else errorEl.innerText = '登入失敗';
-            }
-        };
-        
-        // 登出
-        window.doLogout = function() {
-            signOut(auth);
-        };
-        
-        // 初始化資料 - 即時監聽
-        function initData() {
-            // 監聽庫存
-            onSnapshot(collection(db, 'pallets'), (snap) => {
-                window.pallets = [];
-                snap.forEach(d => window.pallets.push({ id: d.id, ...d.data() }));
-                updateBadges();
-            });
-            
-            // 監聽波次工單
-            onSnapshot(collection(db, 'waves'), (snap) => {
-                window.waves = [];
-                snap.forEach(d => window.waves.push({ id: d.id, ...d.data() }));
-                
-                // 檢查新工單通知
-                const activeWaves = window.waves.filter(w => w.status !== 'done').length;
-                if (prevWaveCount > 0 && activeWaves > prevWaveCount) {
-                    showNotification('📦 新揀貨波次', '有新的揀貨任務！');
-                }
-                prevWaveCount = activeWaves;
-                updateBadges();
-            });
-            
-            // 監聽調度工單
-            onSnapshot(collection(db, 'dispatchOrders'), (snap) => {
-                window.dispatchOrders = [];
-                snap.forEach(d => window.dispatchOrders.push({ id: d.id, ...d.data() }));
-                
-                // 檢查新工單通知
-                const activeOrders = window.dispatchOrders.filter(o => o.status !== 'done').length;
-                if (prevDispatchCount > 0 && activeOrders > prevDispatchCount) {
-                    showNotification('🚛 新調度工單', '有新的調度任務！');
-                }
-                prevDispatchCount = activeOrders;
-                updateBadges();
-            });
-            
-            // 監聽入庫任務
-            onSnapshot(collection(db, 'inboundTasks'), (snap) => {
-                window.inboundTasks = [];
-                snap.forEach(d => window.inboundTasks.push({ id: d.id, ...d.data() }));
-                
-                // 檢查新任務通知
-                const activeTasks = window.inboundTasks.filter(t => t.status !== 'done').length;
-                if (prevInboundCount > 0 && activeTasks > prevInboundCount) {
-                    showNotification('📥 新入庫任務', '有新的入庫任務！');
-                }
-                prevInboundCount = activeTasks;
-                updateBadges();
+(0, 50).map(item => `
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <span class="list-item-title">${item.productName || '-'}</span>
+                            <span class="list-item-status pending">${item.quantity || 0} 件</span>
+                        </div>
+                        <div class="list-item-detail">${item.spec || ''} | 批號: ${item.batchNo || '-'} | 效期: ${item.expDate || '-'}</div>
+                        <div class="list-item-location"><i class="fa-solid fa-location-dot"></i> ${item.locationId || '-'} | <i class="fa-solid fa-barcode"></i> ${item.palletId || '-'}</div>
+                    </div>
+                `).join('');
             });
         }
         
-        // 顯示通知
-        function showNotification(title, body) {
-            // 震動
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-            
-            // 瀏覽器通知（如果有權限）
-            if (Notification.permission === 'granted') {
-                new Notification(title, { body: body, icon: '📦' });
-            }
-            
-            // 畫面提示
-            showToast(title + ' - ' + body);
+        // ==================== 操作日誌 ====================
+        function logOperation(type, data) {
+            db.collection('operationLogs').add({
+                type: type,
+                operatorId: currentOperator.id,
+                operatorName: currentOperator.name,
+                timestamp: new Date().toISOString(),
+                deviceInfo: navigator.userAgent,
+                data: data
+            }).catch(err => console.error('Log error:', err));
         }
         
-        // Toast 提示
-        window.showToast = function(msg) {
-            let toast = document.getElementById('toast');
-            if (!toast) {
-                toast = document.createElement('div');
-                toast.id = 'toast';
-                toast.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#3b82f6;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:9999;opacity:0;transition:opacity 0.3s;';
-                document.body.appendChild(toast);
-            }
-            toast.innerText = msg;
-            toast.style.opacity = '1';
-            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
-        };
-        
-        // 請求通知權限
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission();
+        function logQtyDifference(task, actualQty, diff, reason) {
+            db.collection('qtyDifferences').add({
+                type: 'qty_difference',
+                taskId: task.id,
+                productName: task.productName,
+                locationId: task.locationId,
+                palletId: task.palletId,
+                requiredQty: task.pickQty,
+                actualQty: actualQty,
+                difference: diff,
+                reason: reason,
+                operatorId: currentOperator.id,
+                operatorName: currentOperator.name,
+                timestamp: new Date().toISOString()
+            }).catch(err => console.error('Diff log error:', err));
         }
-    </script>
-    
-    <script>
-        // ==================== 🆕 相機掃描功能 ====================
-        let isScanning = false;
-        let currentTargetInput = null;
-        let lastScanTime = 0;
-        const SCAN_COOLDOWN = 1000; // 1秒冷卻
         
-        // 音效
-        let audioContext = null;
-        try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        } catch(e) {}
+        // ==================== 工具函數 ====================
+        function showResult(el, message, type) {
+            el.innerText = message;
+            el.className = 'scan-result ' + type;
+        }
+        
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+        
+        function vibrate(pattern) {
+            if (navigator.vibrate) navigator.vibrate(pattern);
+        }
         
         function playSuccessSound() {
-            if (!audioContext) return;
             try {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                oscillator.frequency.value = 1200;
-                oscillator.type = 'sine';
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.1);
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.frequency.value = 1200; osc.type = 'sine';
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
             } catch(e) {}
         }
         
         function playErrorSound() {
-            if (!audioContext) return;
             try {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                oscillator.frequency.value = 300;
-                oscillator.type = 'sine';
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.2);
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.frequency.value = 300; osc.type = 'sine';
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
             } catch(e) {}
         }
         
-        // 開啟相機掃描
-        window.openCameraScanner = function(targetInputId) {
-            currentTargetInput = document.getElementById(targetInputId);
-            const modal = document.getElementById('camera-scanner-modal');
-            modal.classList.add('active');
-            
-            // 初始化 Quagga
-            if (typeof Quagga !== 'undefined') {
-                Quagga.init({
-                    inputStream: {
-                        name: "Live",
-                        type: "LiveStream",
-                        target: document.getElementById('scanner-viewport'),
-                        constraints: {
-                            facingMode: "environment",
-                            width: { min: 640, ideal: 1280, max: 1920 },
-                            height: { min: 480, ideal: 720, max: 1080 }
-                        }
-                    },
-                    locator: {
-                        patchSize: "medium",
-                        halfSample: true
-                    },
-                    numOfWorkers: navigator.hardwareConcurrency || 4,
-                    decoder: {
-                        readers: [
-                            "code_128_reader",
-                            "ean_reader",
-                            "ean_8_reader",
-                            "code_39_reader",
-                            "upc_reader",
-                            "upc_e_reader",
-                            "codabar_reader",
-                            "i2of5_reader"
-                        ]
-                    },
-                    locate: true
-                }, function(err) {
-                    if (err) {
-                        console.error('Quagga 初始化失敗:', err);
-                        alert('無法啟動相機，請確認已授權相機權限\n\n錯誤: ' + err.message);
-                        closeCameraScanner();
-                        return;
-                    }
-                    Quagga.start();
-                    isScanning = true;
-                    console.log('📷 相機掃描已啟動');
-                });
-                
-                // 監聽掃描結果
-                Quagga.onDetected(function(result) {
-                    if (!result || !result.codeResult) return;
-                    
-                    const barcode = result.codeResult.code;
-                    const now = Date.now();
-                    
-                    // 冷卻時間檢查
-                    if (now - lastScanTime < SCAN_COOLDOWN) return;
-                    lastScanTime = now;
-                    
-                    console.log('📷 掃描成功:', barcode);
-                    handleScanResult(barcode);
-                });
+        // ==================== 初始化 ====================
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                currentOperator = { id: user.uid, name: user.email.split('@')[0], email: user.email };
+                showApp();
             } else {
-                alert('掃描功能未載入，請重新整理頁面');
-                closeCameraScanner();
-            }
-        };
-        
-        // 關閉相機掃描
-        window.closeCameraScanner = function() {
-            if (isScanning && typeof Quagga !== 'undefined') {
-                Quagga.stop();
-                isScanning = false;
-            }
-            document.getElementById('camera-scanner-modal').classList.remove('active');
-            currentTargetInput = null;
-        };
-        
-        // 處理掃描結果
-        function handleScanResult(barcode) {
-            // 顯示 Toast
-            const toast = document.getElementById('scan-result-toast');
-            toast.textContent = '✓ ' + barcode;
-            toast.style.display = 'block';
-            
-            // 音效 + 震動
-            playSuccessSound();
-            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            
-            // 填入輸入框
-            if (currentTargetInput) {
-                currentTargetInput.value = barcode;
-            }
-            
-            // 延遲關閉並觸發確認
-            setTimeout(() => {
-                toast.style.display = 'none';
-                closeCameraScanner();
-                
-                // 根據目標輸入框觸發對應的確認函數
-                if (currentTargetInput) {
-                    const id = currentTargetInput.id;
-                    if (id === 'picking-scan') confirmPickingScan();
-                    else if (id === 'inbound-scan') confirmInboundScan();
-                    else if (id === 'dispatch-scan') confirmDispatchScan();
-                    else if (id === 'query-input') doInventoryQuery();
-                }
-            }, 800);
-        }
-        
-        // 手動輸入提交
-        window.submitManualBarcode = function() {
-            const input = document.getElementById('manual-barcode-input');
-            const barcode = input.value.trim();
-            if (!barcode) return;
-            
-            handleScanResult(barcode);
-            input.value = '';
-        };
-        
-        // Enter 鍵提交手動輸入
-        document.getElementById('manual-barcode-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                submitManualBarcode();
+                document.getElementById('login-page').style.display = 'flex';
+                document.getElementById('app-container').classList.remove('active');
             }
         });
         
-        // ==================== 原有功能 ====================
-        
-        // 更新 Badge 數量
-        function updateBadges() {
-            // 揀貨
-            const activeWaves = (window.waves || []).filter(w => w.status !== 'done').length;
-            const badgePicking = document.getElementById('badge-picking');
-            if (activeWaves > 0) {
-                badgePicking.innerText = activeWaves;
-                badgePicking.style.display = 'flex';
-            } else {
-                badgePicking.style.display = 'none';
-            }
-            
-            // 入庫
-            const activeTasks = (window.inboundTasks || []).filter(t => t.status !== 'done').length;
-            const badgeInbound = document.getElementById('badge-inbound');
-            if (activeTasks > 0) {
-                badgeInbound.innerText = activeTasks;
-                badgeInbound.style.display = 'flex';
-            } else {
-                badgeInbound.style.display = 'none';
-            }
-            
-            // 調度
-            const activeDispatch = (window.dispatchOrders || []).filter(o => o.status !== 'done').length;
-            const badgeDispatch = document.getElementById('badge-dispatch');
-            if (activeDispatch > 0) {
-                badgeDispatch.innerText = activeDispatch;
-                badgeDispatch.style.display = 'flex';
-            } else {
-                badgeDispatch.style.display = 'none';
-            }
-        }
-        
-        // 頁面切換
-        function openPage(page) {
-            document.getElementById('app-main').classList.remove('active');
-            document.getElementById('page-' + page).classList.add('active');
-            
-            if (page === 'picking') loadPickingWaves();
-            if (page === 'inbound') loadInboundTasks();
-            if (page === 'dispatch') loadDispatchOrders();
-        }
-        
-        function goBack() {
-            // 關閉相機掃描（如果開啟）
-            closeCameraScanner();
-            
-            document.querySelectorAll('.func-page').forEach(p => p.classList.remove('active'));
-            document.getElementById('app-main').classList.add('active');
-        }
-        
-        // ========== 揀貨掃描 ==========
-        let currentWave = null;
-        let pickingItems = [];
-        
-        function loadPickingWaves() {
-            const waves = window.waves || [];
-            const select = document.getElementById('picking-wave-select');
-            select.innerHTML = '<option value="">-- 請選擇 --</option>';
-            
-            waves.filter(w => w.status !== 'done').forEach(w => {
-                select.innerHTML += `<option value="${w.id}">${w.waveNo} - ${w.logistics || '混合'} (${w.totalQty || 0}件)</option>`;
-            });
-        }
-        
-        window.loadPickingWave = function() {
-            const waveId = document.getElementById('picking-wave-select').value;
-            if (!waveId) {
-                document.getElementById('picking-scan-area').style.display = 'none';
-                document.getElementById('picking-actions').style.display = 'none';
-                return;
-            }
-            
-            const waves = window.waves || [];
-            currentWave = waves.find(w => w.id === waveId);
-            if (!currentWave) return;
-            
-            // 產生揀貨清單
-            pickingItems = [];
-            (currentWave.orders || []).forEach(order => {
-                let needed = parseInt(order.quantity) || 0;
-                const matching = window.pallets.filter(p => p.productName === order.productName)
-                    .sort((a, b) => (a.expDate || '').localeCompare(b.expDate || ''));
-                
-                matching.forEach(p => {
-                    if (needed <= 0) return;
-                    const pick = Math.min(p.quantity, needed);
-                    pickingItems.push({
-                        id: p.palletId + '-' + order.id,
-                        palletId: p.palletId,
-                        locationId: p.locationId,
-                        productName: p.productName,
-                        pickQty: pick,
-                        orderNo: order.orderNo,
-                        customer: order.customer,
-                        completed: false
-                    });
-                    needed -= pick;
-                });
-                
-                if (needed > 0) {
-                    pickingItems.push({
-                        id: 'shortage-' + order.id,
-                        locationId: '庫存不足',
-                        productName: order.productName,
-                        pickQty: needed,
-                        shortage: true
-                    });
-                }
-            });
-            
-            // 標記已完成
-            const completed = currentWave.completedItems || [];
-            pickingItems.forEach(item => {
-                if (completed.includes(item.id)) item.completed = true;
-            });
-            
-            renderPickingList();
-            document.getElementById('picking-scan-area').style.display = 'block';
-            document.getElementById('picking-actions').style.display = 'block';
-            document.getElementById('picking-scan').focus();
-        };
-        
-        function renderPickingList() {
-            const list = document.getElementById('picking-list');
-            const completed = pickingItems.filter(i => i.completed).length;
-            const total = pickingItems.filter(i => !i.shortage).length;
-            document.getElementById('picking-progress').innerText = completed + '/' + total;
-            
-            if (pickingItems.length === 0) {
-                list.innerHTML = '<div class="empty-state"><i class="fa-solid fa-clipboard-list"></i><p>無揀貨項目</p></div>';
-                return;
-            }
-            
-            // 按儲位排序
-            pickingItems.sort((a, b) => (a.locationId || '').localeCompare(b.locationId || ''));
-            
-            list.innerHTML = pickingItems.map(item => {
-                const cls = item.completed ? 'completed' : item.shortage ? 'shortage' : '';
-                const status = item.completed ? '<span class="item-status done">✓ 完成</span>' :
-                              item.shortage ? '<span class="item-status shortage">缺貨</span>' :
-                              '<span class="item-status pending">待揀</span>';
-                return `
-                    <div class="list-item ${cls}">
-                        <div class="item-row">
-                            <span class="item-location">${item.locationId}</span>
-                            ${status}
-                        </div>
-                        <div class="item-product">${item.productName}</div>
-                        <div class="item-row">
-                            <span class="item-detail">${item.palletId || '-'} | ${item.customer || ''}</span>
-                            <span class="item-qty">${item.pickQty}</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-        
-        window.confirmPickingScan = async function() {
-            const input = document.getElementById('picking-scan');
-            const result = document.getElementById('picking-scan-result');
-            const scanned = input.value.trim();
-            
-            if (!scanned) return;
-            
-            const found = pickingItems.find(i => !i.completed && !i.shortage && 
-                (i.palletId === scanned || i.locationId === scanned));
-            
-            if (!found) {
-                result.className = 'scan-result error';
-                result.innerText = '❌ 找不到：' + scanned;
-                playErrorSound();
-                input.select();
-                return;
-            }
-            
-            found.completed = true;
-            
-            // 儲存進度到 Firebase
-            try {
-                if (!currentWave.completedItems) currentWave.completedItems = [];
-                currentWave.completedItems.push(found.id);
-                
-                await window.updateDoc(window.doc(window.db, 'waves', currentWave.id), {
-                    completedItems: currentWave.completedItems,
-                    status: 'picking'
-                });
-            } catch (err) {
-                console.error('儲存失敗:', err);
-            }
-            
-            result.className = 'scan-result success';
-            result.innerText = '✓ ' + found.productName + ' x ' + found.pickQty;
-            
-            renderPickingList();
-            input.value = '';
-            input.focus();
-            
-            // 音效 + 震動
-            playSuccessSound();
-            if (navigator.vibrate) navigator.vibrate(100);
-        };
-        
-        window.completePickingWave = async function() {
-            const completed = pickingItems.filter(i => i.completed).length;
-            const total = pickingItems.filter(i => !i.shortage).length;
-            
-            if (completed === 0) {
-                alert('尚未揀貨任何項目');
-                return;
-            }
-            
-            if (!confirm(`完成波次？\n\n已揀：${completed}/${total}`)) return;
-            
-            // 更新 Firebase
-            try {
-                await window.updateDoc(window.doc(window.db, 'waves', currentWave.id), {
-                    status: 'done',
-                    completedAt: new Date().toISOString()
-                });
-            } catch (err) {
-                console.error('更新失敗:', err);
-            }
-            
-            alert('✅ 波次完成！');
-            goBack();
-        };
-        
-        // ========== 入庫任務 ==========
-        
-        function loadInboundTasks() {
-            const tasks = (window.inboundTasks || []).filter(t => t.status !== 'done');
-            
-            document.getElementById('inbound-count').innerText = tasks.length + ' 筆待入庫';
-            
-            const list = document.getElementById('inbound-list');
-            if (tasks.length === 0) {
-                list.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>目前沒有待入庫任務</p></div>';
-                return;
-            }
-            
-            list.innerHTML = tasks.map(t => `
-                <div class="list-item" data-id="${t.id}">
-                    <div class="item-row">
-                        <span class="item-location">${t.locationId || '待分配'}</span>
-                        <span class="item-status pending">待入庫</span>
-                    </div>
-                    <div class="item-product">${t.productName}</div>
-                    <div class="item-row">
-                        <span class="item-detail">${t.palletId || '-'} | ${t.batchNo || '-'}</span>
-                        <span class="item-qty">${t.quantity}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-        window.confirmInboundScan = async function() {
-            const input = document.getElementById('inbound-scan');
-            const result = document.getElementById('inbound-scan-result');
-            const scanned = input.value.trim();
-            
-            if (!scanned) return;
-            
-            // 先檢查待入庫任務
-            const task = (window.inboundTasks || []).find(t => 
-                t.status !== 'done' && (t.palletId === scanned || t.orderNo === scanned)
-            );
-            
-            if (task) {
-                // 找到任務，確認入庫
-                try {
-                    await window.updateDoc(window.doc(window.db, 'inboundTasks', task.id), {
-                        status: 'done',
-                        confirmedAt: new Date().toISOString()
-                    });
-                    
-                    result.className = 'scan-result success';
-                    result.innerText = '✓ 入庫確認：' + task.productName + ' @ ' + task.locationId;
-                    
-                    loadInboundTasks();
-                    playSuccessSound();
-                    if (navigator.vibrate) navigator.vibrate(100);
-                } catch (err) {
-                    result.className = 'scan-result error';
-                    result.innerText = '❌ 確認失敗：' + err.message;
-                    playErrorSound();
-                }
-            } else {
-                // 檢查庫存是否已存在
-                const found = window.pallets.find(p => p.palletId === scanned);
-                
-                if (found) {
-                    result.className = 'scan-result success';
-                    result.innerText = '✓ 已存在：' + found.productName + ' @ ' + found.locationId;
-                    playSuccessSound();
-                } else {
-                    result.className = 'scan-result error';
-                    result.innerText = '❌ 找不到：' + scanned;
-                    playErrorSound();
-                }
-            }
-            
-            input.value = '';
-            input.focus();
-        };
-        
-        // ========== 調度執行 ==========
-        let currentDispatch = null;
-        let dispatchItems = [];
-        
-        function loadDispatchOrders() {
-            const orders = (window.dispatchOrders || []).filter(o => o.status !== 'done');
-            
-            const select = document.getElementById('dispatch-order-select');
-            select.innerHTML = '<option value="">-- 請選擇 --</option>';
-            
-            orders.forEach((order, idx) => {
-                const ops = (order.operations || []).length;
-                select.innerHTML += `<option value="${order.id}">${order.orderNo || '工單'} - ${order.productName || ''} (${ops}項)</option>`;
-            });
-        }
-        
-        window.loadDispatchOrder = function() {
-            const orderId = document.getElementById('dispatch-order-select').value;
-            if (!orderId) {
-                document.getElementById('dispatch-scan-area').style.display = 'none';
-                document.getElementById('dispatch-actions').style.display = 'none';
-                return;
-            }
-            
-            currentDispatch = (window.dispatchOrders || []).find(o => o.id === orderId);
-            if (!currentDispatch) return;
-            
-            dispatchItems = (currentDispatch.operations || []).map((op, idx) => ({
-                ...op,
-                id: op.id || 'op-' + idx,
-                completed: (currentDispatch.completedOps || []).includes(op.id || 'op-' + idx)
-            }));
-            
-            renderDispatchList();
-            document.getElementById('dispatch-scan-area').style.display = 'block';
-            document.getElementById('dispatch-actions').style.display = 'block';
-            document.getElementById('dispatch-scan').focus();
-        };
-        
-        function renderDispatchList() {
-            const list = document.getElementById('dispatch-list');
-            const completed = dispatchItems.filter(i => i.completed).length;
-            document.getElementById('dispatch-progress').innerText = completed + '/' + dispatchItems.length;
-            
-            if (dispatchItems.length === 0) {
-                list.innerHTML = '<div class="empty-state"><i class="fa-solid fa-clipboard-list"></i><p>無調度項目</p></div>';
-                return;
-            }
-            
-            list.innerHTML = dispatchItems.map(item => {
-                const cls = item.completed ? 'completed' : '';
-                const status = item.completed ? '<span class="item-status done">✓ 完成</span>' :
-                              '<span class="item-status pending">' + item.type + '</span>';
-                return `
-                    <div class="list-item ${cls}">
-                        <div class="item-row">
-                            <span class="item-location">${item.from}</span>
-                            ${status}
-                        </div>
-                        <div class="item-product">${item.palletId || '-'} → ${item.to}</div>
-                        <div class="item-row">
-                            <span class="item-detail">${item.type}</span>
-                            <span class="item-qty">${item.qty}</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-        
-        window.confirmDispatchScan = async function() {
-            const input = document.getElementById('dispatch-scan');
-            const result = document.getElementById('dispatch-scan-result');
-            const scanned = input.value.trim();
-            
-            if (!scanned) return;
-            
-            const found = dispatchItems.find(i => !i.completed && 
-                (i.palletId === scanned || i.from === scanned));
-            
-            if (!found) {
-                result.className = 'scan-result error';
-                result.innerText = '❌ 找不到：' + scanned;
-                playErrorSound();
-                input.select();
-                return;
-            }
-            
-            found.completed = true;
-            
-            // 儲存進度到 Firebase
-            try {
-                if (!currentDispatch.completedOps) currentDispatch.completedOps = [];
-                currentDispatch.completedOps.push(found.id);
-                
-                await window.updateDoc(window.doc(window.db, 'dispatchOrders', currentDispatch.id), {
-                    completedOps: currentDispatch.completedOps,
-                    status: 'executing'
-                });
-            } catch (err) {
-                console.error('儲存失敗:', err);
-            }
-            
-            result.className = 'scan-result success';
-            result.innerText = '✓ ' + found.from + ' → ' + found.to;
-            
-            renderDispatchList();
-            input.value = '';
-            input.focus();
-            
-            playSuccessSound();
-            if (navigator.vibrate) navigator.vibrate(100);
-        };
-        
-        window.completeDispatchOrder = async function() {
-            const completed = dispatchItems.filter(i => i.completed).length;
-            
-            if (completed === 0) {
-                alert('尚未執行任何操作');
-                return;
-            }
-            
-            if (!confirm(`完成工單？\n\n已執行：${completed}/${dispatchItems.length}`)) return;
-            
-            // 更新 Firebase
-            try {
-                await window.updateDoc(window.doc(window.db, 'dispatchOrders', currentDispatch.id), {
-                    status: 'done',
-                    completedAt: new Date().toISOString()
-                });
-            } catch (err) {
-                console.error('更新失敗:', err);
-            }
-            
-            alert('✅ 工單完成！');
-            goBack();
-        };
-        
-        // ========== 庫存快查 ==========
-        window.doInventoryQuery = function() {
-            const input = document.getElementById('query-input');
-            const result = document.getElementById('query-result');
-            const keyword = input.value.trim().toLowerCase();
-            
-            if (!keyword) return;
-            
-            const matches = window.pallets.filter(p => 
-                (p.productName && p.productName.toLowerCase().includes(keyword)) ||
-                (p.palletId && p.palletId.toLowerCase().includes(keyword)) ||
-                (p.batchNo && p.batchNo.toLowerCase().includes(keyword))
-            );
-            
-            if (matches.length === 0) {
-                result.innerHTML = '<div class="empty-state"><i class="fa-solid fa-search"></i><p>找不到：' + keyword + '</p></div>';
-                return;
-            }
-            
-            // 按品名分組
-            const grouped = {};
-            matches.forEach(p => {
-                const key = p.productName;
-                if (!grouped[key]) grouped[key] = { name: p.productName, spec: p.spec, items: [] };
-                grouped[key].items.push(p);
-            });
-            
-            result.innerHTML = Object.values(grouped).map(g => `
-                <div class="result-card">
-                    <div class="result-product">${g.name}</div>
-                    <div class="result-spec">${g.spec || ''}</div>
-                    ${g.items.map(p => `
-                        <div class="result-row">
-                            <span class="result-loc">${p.locationId}</span>
-                            <span class="result-qty">${p.quantity} 件</span>
-                        </div>
-                    `).join('')}
-                </div>
-            `).join('');
-        };
-        
-        // Enter 鍵觸發
-        document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const active = document.activeElement;
-                if (active.id === 'picking-scan') confirmPickingScan();
-                if (active.id === 'inbound-scan') confirmInboundScan();
-                if (active.id === 'dispatch-scan') confirmDispatchScan();
-                if (active.id === 'query-input') doInventoryQuery();
-            }
-        });
-        
-        // 條碼槍全局監聽
-        let barcodeBuffer = '';
-        let barcodeTimeout = null;
-        
-        document.addEventListener('keydown', function(e) {
-            const active = document.activeElement;
-            const isInputField = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
-            
-            // 如果不在輸入框中，監聽條碼槍
-            if (!isInputField) {
-                if (e.key === 'Enter' && barcodeBuffer.length > 0) {
-                    // 找到當前可見的掃描輸入框
-                    const visibleInputs = ['picking-scan', 'inbound-scan', 'dispatch-scan', 'query-input'];
-                    for (const id of visibleInputs) {
-                        const input = document.getElementById(id);
-                        if (input && input.offsetParent !== null) {
-                            input.value = barcodeBuffer;
-                            input.focus();
-                            // 觸發對應確認
-                            if (id === 'picking-scan') confirmPickingScan();
-                            else if (id === 'inbound-scan') confirmInboundScan();
-                            else if (id === 'dispatch-scan') confirmDispatchScan();
-                            else if (id === 'query-input') doInventoryQuery();
-                            break;
-                        }
-                    }
-                    barcodeBuffer = '';
-                    clearTimeout(barcodeTimeout);
-                } else if (e.key.length === 1) {
-                    barcodeBuffer += e.key;
-                    clearTimeout(barcodeTimeout);
-                    barcodeTimeout = setTimeout(() => {
-                        barcodeBuffer = '';
-                    }, 200);
-                }
-            }
-        });
-        
-        console.log('✅ Terry WMS 手機版載入完成 (含相機掃描)');
+        setInterval(updateOperatorDisplay, 60000);
     </script>
 </body>
 </html>
