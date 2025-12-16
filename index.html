@@ -823,6 +823,54 @@
     </script>
     
     <script>
+        // ========== 相機掃描功能 ==========
+        let html5QrCode = null;
+        let currentScanTarget = null;
+        
+        function openCameraScanner(targetInputId) {
+            currentScanTarget = targetInputId;
+            document.getElementById('camera-modal').classList.add('active');
+            
+            html5QrCode = new Html5Qrcode("qr-reader");
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 150 } },
+                function(decodedText) {
+                    // 掃描成功
+                    if (currentScanTarget) {
+                        document.getElementById(currentScanTarget).value = decodedText;
+                    }
+                    if (navigator.vibrate) navigator.vibrate(100);
+                    stopCameraScanner();
+                    
+                    // 自動觸發確認
+                    setTimeout(function() {
+                        if (currentScanTarget === 'inbound-pallet-scan') confirmInboundPallet();
+                        else if (currentScanTarget === 'inbound-location-scan') confirmInboundLocation();
+                        else if (currentScanTarget === 'picking-scan') confirmPickingScan();
+                        else if (currentScanTarget === 'dispatch-scan') confirmDispatchScan();
+                        else if (currentScanTarget === 'query-input') doInventoryQuery();
+                    }, 100);
+                },
+                function(errorMessage) { /* 忽略掃描錯誤 */ }
+            ).catch(function(err) {
+                console.error('相機啟動失敗:', err);
+                alert('無法啟動相機，請確認已授予相機權限');
+                stopCameraScanner();
+            });
+        }
+        
+        function stopCameraScanner() {
+            document.getElementById('camera-modal').classList.remove('active');
+            if (html5QrCode) {
+                html5QrCode.stop().then(function() {
+                    html5QrCode.clear();
+                    html5QrCode = null;
+                }).catch(function(err) { console.log('停止相機錯誤:', err); });
+            }
+            currentScanTarget = null;
+        }
+        
         // 更新 Badge 數量
         function updateBadges() {
             // 揀貨
@@ -1423,5 +1471,16 @@
             }
         });
     </script>
+    <!-- 相機掃描 Modal -->
+    <div id="camera-modal" class="camera-modal">
+        <div class="camera-header">
+            <h3><i class="fa-solid fa-camera"></i> 掃描條碼</h3>
+            <button class="camera-close" onclick="stopCameraScanner()"><i class="fa-solid fa-xmark"></i> 關閉</button>
+        </div>
+        <div class="camera-preview">
+            <div id="qr-reader"></div>
+        </div>
+        <div class="camera-hint">將條碼對準框內，自動識別</div>
+    </div>
 </body>
 </html>
