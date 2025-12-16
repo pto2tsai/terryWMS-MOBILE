@@ -342,7 +342,65 @@
         
         /* 隱藏 */
         .hidden { display: none !important; }
+    
+        /* 相機掃描 */
+        .camera-btn {
+            padding: 14px 16px;
+            background: #10b981;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .camera-btn:active { background: #059669; }
+        .camera-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 9999;
+            flex-direction: column;
+        }
+        .camera-modal.active { display: flex; }
+        .camera-header {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+        }
+        .camera-header h3 { font-size: 18px; }
+        .camera-close {
+            background: #ef4444;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .camera-preview {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        #qr-reader {
+            width: 100%;
+            max-width: 400px;
+        }
+        #qr-reader video {
+            border-radius: 12px;
+        }
+        .camera-hint {
+            padding: 16px;
+            text-align: center;
+            color: #94a3b8;
+            background: #1e293b;
+        }
     </style>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
     <!-- 登入頁 -->
@@ -440,6 +498,7 @@
         <div class="scan-section" id="picking-scan-area" style="display:none">
             <div class="scan-input-wrap">
                 <input type="text" id="picking-scan" class="scan-input" placeholder="掃描儲位或板號">
+                <button class="camera-btn" onclick="openCameraScanner('picking-scan')"><i class="fa-solid fa-camera"></i></button>
                 <button class="scan-btn" onclick="confirmPickingScan()"><i class="fa-solid fa-check"></i></button>
             </div>
             <p class="scan-hint">掃描後自動確認揀貨</p>
@@ -481,6 +540,7 @@
                 </div>
                 <div class="scan-input-wrap">
                     <input type="text" id="inbound-pallet-scan" class="scan-input" placeholder="掃描入庫板號">
+                    <button class="camera-btn" onclick="openCameraScanner('inbound-pallet-scan')"><i class="fa-solid fa-camera"></i></button>
                     <button class="scan-btn" onclick="confirmInboundPallet()"><i class="fa-solid fa-check"></i></button>
                 </div>
                 <p class="scan-hint">第一步：掃描標籤上的板號條碼</p>
@@ -507,6 +567,7 @@
                 </div>
                 <div class="scan-input-wrap">
                     <input type="text" id="inbound-location-scan" class="scan-input" placeholder="掃描儲位條碼">
+                    <button class="camera-btn" onclick="openCameraScanner('inbound-location-scan')"><i class="fa-solid fa-camera"></i></button>
                     <button class="scan-btn" onclick="confirmInboundLocation()"><i class="fa-solid fa-check"></i></button>
                 </div>
                 <p class="scan-hint">第二步：到達儲位後，掃描儲位條碼確認</p>
@@ -546,6 +607,7 @@
         <div class="scan-section" id="dispatch-scan-area" style="display:none">
             <div class="scan-input-wrap">
                 <input type="text" id="dispatch-scan" class="scan-input" placeholder="掃描板號確認">
+                <button class="camera-btn" onclick="openCameraScanner('dispatch-scan')"><i class="fa-solid fa-camera"></i></button>
                 <button class="scan-btn" onclick="confirmDispatchScan()"><i class="fa-solid fa-check"></i></button>
             </div>
             <p class="scan-hint">掃描板號確認執行</p>
@@ -582,6 +644,7 @@
         <div class="scan-section">
             <div class="scan-input-wrap">
                 <input type="text" id="query-input" class="scan-input" placeholder="輸入品名或板號">
+                <button class="camera-btn" onclick="openCameraScanner('query-input')"><i class="fa-solid fa-camera"></i></button>
                 <button class="scan-btn" onclick="doInventoryQuery()"><i class="fa-solid fa-search"></i></button>
             </div>
             <p class="scan-hint">支援模糊搜尋</p>
