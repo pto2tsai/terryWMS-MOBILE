@@ -496,12 +496,68 @@
         </div>
         
         <div class="scan-section" id="picking-scan-area" style="display:none">
-            <div class="scan-input-wrap">
-                <input type="text" id="picking-scan" class="scan-input" placeholder="掃描儲位或板號">
-                <button class="camera-btn" onclick="openCameraScanner('picking-scan')"><i class="fa-solid fa-camera"></i></button>
-                <button class="scan-btn" onclick="confirmPickingScan()"><i class="fa-solid fa-check"></i></button>
+            <!-- 當前揀貨項目資訊 -->
+            <div id="picking-current-item" style="background:#1e3a5f;border:1px solid #3b82f6;border-radius:10px;padding:12px;margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                    <span style="color:#94a3b8;">品名</span>
+                    <span id="picking-item-product" style="color:white;font-weight:bold;">-</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                    <span style="color:#94a3b8;">批號</span>
+                    <span id="picking-item-batch" style="color:#f59e0b;">-</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                    <span style="color:#94a3b8;">需揀數量</span>
+                    <span id="picking-item-qty" style="color:#22c55e;font-size:20px;font-weight:bold;">-</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;background:rgba(59,130,246,0.2);margin:-12px;margin-top:8px;padding:12px;border-radius:0 0 10px 10px;">
+                    <span style="color:#3b82f6;font-weight:bold;">📍 儲位</span>
+                    <span id="picking-item-location" style="color:#3b82f6;font-size:18px;font-weight:bold;">-</span>
+                </div>
             </div>
-            <p class="scan-hint">掃描後自動確認揀貨</p>
+            
+            <!-- Step 1: 掃描儲位 -->
+            <div id="picking-step1">
+                <div style="background:rgba(59,130,246,0.1);border-radius:8px;padding:10px;margin-bottom:12px;text-align:center;">
+                    <span style="color:#3b82f6;font-weight:bold;">步驟 1/3</span> - 掃描儲位確認
+                </div>
+                <div class="scan-input-wrap">
+                    <input type="text" id="picking-location-scan" class="scan-input" placeholder="掃描儲位條碼">
+                    <button class="camera-btn" onclick="openCameraScanner('picking-location-scan')"><i class="fa-solid fa-camera"></i></button>
+                    <button class="scan-btn" onclick="confirmPickingLocation()"><i class="fa-solid fa-check"></i></button>
+                </div>
+            </div>
+            
+            <!-- Step 2: 掃描板號 -->
+            <div id="picking-step2" style="display:none;">
+                <div style="background:rgba(168,85,247,0.1);border-radius:8px;padding:10px;margin-bottom:12px;text-align:center;">
+                    <span style="color:#a855f7;font-weight:bold;">步驟 2/3</span> - 掃描板號確認
+                </div>
+                <div class="scan-input-wrap">
+                    <input type="text" id="picking-pallet-scan" class="scan-input" placeholder="掃描板號條碼">
+                    <button class="camera-btn" onclick="openCameraScanner('picking-pallet-scan')"><i class="fa-solid fa-camera"></i></button>
+                    <button class="scan-btn" onclick="confirmPickingPallet()"><i class="fa-solid fa-check"></i></button>
+                </div>
+            </div>
+            
+            <!-- Step 3: 確認數量 -->
+            <div id="picking-step3" style="display:none;">
+                <div style="background:rgba(34,197,94,0.1);border-radius:8px;padding:10px;margin-bottom:12px;text-align:center;">
+                    <span style="color:#22c55e;font-weight:bold;">步驟 3/3</span> - 確認揀貨數量
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <input type="number" id="picking-qty-input" class="scan-input" style="flex:1;text-align:center;font-size:24px;font-weight:bold;" placeholder="0">
+                    <button onclick="confirmPickingQty()" style="padding:14px 24px;background:#22c55e;border:none;border-radius:10px;color:white;font-weight:bold;font-size:16px;">
+                        <i class="fa-solid fa-check"></i> 確認
+                    </button>
+                </div>
+                <p class="scan-hint" style="text-align:center;margin-top:8px;">請輸入實際揀貨數量</p>
+            </div>
+            
+            <button onclick="resetPickingScan()" style="width:100%;padding:10px;background:transparent;border:1px solid #475569;border-radius:8px;color:#94a3b8;margin-top:10px;cursor:pointer;">
+                <i class="fa-solid fa-rotate-left"></i> 重新掃描 / 跳過此項
+            </button>
+            
             <div id="picking-scan-result" class="scan-result"></div>
         </div>
         
@@ -847,6 +903,8 @@
                     setTimeout(function() {
                         if (currentScanTarget === 'inbound-pallet-scan') confirmInboundPallet();
                         else if (currentScanTarget === 'inbound-location-scan') confirmInboundLocation();
+                        else if (currentScanTarget === 'picking-location-scan') confirmPickingLocation();
+                        else if (currentScanTarget === 'picking-pallet-scan') confirmPickingPallet();
                         else if (currentScanTarget === 'picking-scan') confirmPickingScan();
                         else if (currentScanTarget === 'dispatch-scan') confirmDispatchScan();
                         else if (currentScanTarget === 'query-input') doInventoryQuery();
@@ -869,6 +927,37 @@
                 }).catch(function(err) { console.log('停止相機錯誤:', err); });
             }
             currentScanTarget = null;
+        }
+        
+        // ========== 庫存異動記錄系統 ==========
+        // 記錄所有庫存異動到 inventoryLogs，供報表查詢使用
+        async function logInventoryChange(data) {
+            try {
+                var logEntry = {
+                    type: data.type || 'unknown',           // inbound, outbound, move, adjust
+                    productName: data.productName || '',
+                    spec: data.spec || '',
+                    quantity: data.quantity || 0,
+                    quantityChange: data.quantityChange || 0,  // 正數=入庫, 負數=出庫
+                    locationId: data.locationId || '',
+                    fromLocation: data.fromLocation || '',     // 移位用
+                    toLocation: data.toLocation || '',         // 移位用
+                    batchNo: data.batchNo || '',
+                    palletId: data.palletId || '',
+                    expDate: data.expDate || '',
+                    note: data.note || '',
+                    operator: window.currentUser ? window.currentUser.email : 'mobile-user',
+                    operatorName: window.currentUser ? window.currentUser.email.split('@')[0] : 'operator',
+                    deviceType: 'mobile',
+                    timestamp: new Date().toISOString(),
+                    createdAt: new Date()
+                };
+                
+                await window.addDoc(window.collection(window.db, 'inventoryLogs'), logEntry);
+                console.log('📝 異動記錄已儲存:', logEntry.type, logEntry.productName);
+            } catch (e) {
+                console.error('記錄異動失敗:', e);
+            }
         }
         
         // 更新 Badge 數量
@@ -1026,6 +1115,193 @@
             }).join('');
         }
         
+        // ========== 揀貨三步驟驗證 ==========
+        let currentPickingItem = null;
+        let currentPickingIndex = 0;
+        
+        // 顯示當前揀貨項目
+        function showCurrentPickingItem() {
+            // 找下一個未完成的項目
+            const pending = pickingItems.filter(i => !i.completed && !i.shortage);
+            if (pending.length === 0) {
+                document.getElementById('picking-current-item').style.display = 'none';
+                document.getElementById('picking-step1').style.display = 'none';
+                document.getElementById('picking-step2').style.display = 'none';
+                document.getElementById('picking-step3').style.display = 'none';
+                document.getElementById('picking-scan-result').className = 'scan-result success';
+                document.getElementById('picking-scan-result').innerText = '🎉 所有項目已揀完！請點擊「完成波次」';
+                return;
+            }
+            
+            currentPickingItem = pending[0];
+            currentPickingIndex = pickingItems.indexOf(currentPickingItem);
+            
+            // 顯示資訊
+            document.getElementById('picking-item-product').innerText = currentPickingItem.productName + (currentPickingItem.spec ? ' / ' + currentPickingItem.spec : '');
+            document.getElementById('picking-item-batch').innerText = currentPickingItem.batchNo || '(無批號)';
+            document.getElementById('picking-item-qty').innerText = currentPickingItem.pickQty;
+            document.getElementById('picking-item-location').innerText = currentPickingItem.locationId || '-';
+            
+            // 重置步驟
+            document.getElementById('picking-current-item').style.display = 'block';
+            document.getElementById('picking-step1').style.display = 'block';
+            document.getElementById('picking-step2').style.display = 'none';
+            document.getElementById('picking-step3').style.display = 'none';
+            document.getElementById('picking-location-scan').value = '';
+            document.getElementById('picking-pallet-scan').value = '';
+            document.getElementById('picking-qty-input').value = currentPickingItem.pickQty;
+            
+            document.getElementById('picking-scan-result').className = 'scan-result';
+            document.getElementById('picking-scan-result').innerText = '';
+            
+            setTimeout(() => document.getElementById('picking-location-scan').focus(), 100);
+        }
+        
+        // Step 1: 確認儲位
+        window.confirmPickingLocation = function() {
+            const input = document.getElementById('picking-location-scan');
+            const result = document.getElementById('picking-scan-result');
+            const scanned = input.value.trim().toUpperCase();
+            
+            if (!scanned) {
+                result.className = 'scan-result error';
+                result.innerText = '請掃描儲位';
+                return;
+            }
+            
+            if (!currentPickingItem) {
+                result.className = 'scan-result error';
+                result.innerText = '請先選擇波次';
+                return;
+            }
+            
+            const expected = (currentPickingItem.locationId || '').toUpperCase();
+            
+            if (scanned === expected) {
+                result.className = 'scan-result success';
+                result.innerText = '✓ 儲位確認，請掃描板號';
+                
+                document.getElementById('picking-step1').style.display = 'none';
+                document.getElementById('picking-step2').style.display = 'block';
+                
+                if (navigator.vibrate) navigator.vibrate(50);
+                setTimeout(() => document.getElementById('picking-pallet-scan').focus(), 100);
+            } else {
+                result.className = 'scan-result error';
+                result.innerText = '❌ 儲位錯誤！\n掃描的: ' + scanned + '\n正確的: ' + expected;
+                input.value = '';
+                input.focus();
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            }
+        };
+        
+        // Step 2: 確認板號
+        window.confirmPickingPallet = function() {
+            const input = document.getElementById('picking-pallet-scan');
+            const result = document.getElementById('picking-scan-result');
+            const scanned = input.value.trim().toUpperCase();
+            
+            if (!scanned) {
+                result.className = 'scan-result error';
+                result.innerText = '請掃描板號';
+                return;
+            }
+            
+            const expected = (currentPickingItem.palletId || '').toUpperCase();
+            
+            if (scanned === expected) {
+                result.className = 'scan-result success';
+                result.innerText = '✓ 板號確認，請確認數量';
+                
+                document.getElementById('picking-step2').style.display = 'none';
+                document.getElementById('picking-step3').style.display = 'block';
+                document.getElementById('picking-qty-input').value = currentPickingItem.pickQty;
+                
+                if (navigator.vibrate) navigator.vibrate(50);
+                setTimeout(() => document.getElementById('picking-qty-input').focus(), 100);
+            } else {
+                result.className = 'scan-result error';
+                result.innerText = '❌ 板號錯誤！\n掃描的: ' + scanned + '\n正確的: ' + expected;
+                input.value = '';
+                input.focus();
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            }
+        };
+        
+        // Step 3: 確認數量
+        window.confirmPickingQty = async function() {
+            const input = document.getElementById('picking-qty-input');
+            const result = document.getElementById('picking-scan-result');
+            const qty = parseInt(input.value) || 0;
+            
+            if (qty <= 0) {
+                result.className = 'scan-result error';
+                result.innerText = '請輸入有效數量';
+                return;
+            }
+            
+            const expectedQty = currentPickingItem.pickQty;
+            
+            // 標記完成
+            currentPickingItem.completed = true;
+            currentPickingItem.actualQty = qty;
+            
+            // 儲存進度到 Firebase
+            try {
+                if (!currentWave.completedItems) currentWave.completedItems = [];
+                currentWave.completedItems.push(currentPickingItem.id);
+                
+                await window.updateDoc(window.doc(window.db, 'waves', currentWave.id), {
+                    completedItems: currentWave.completedItems,
+                    status: 'picking'
+                });
+            } catch (err) {
+                console.error('儲存失敗:', err);
+            }
+            
+            // 記錄出庫異動
+            logInventoryChange({
+                type: 'outbound',
+                productName: currentPickingItem.productName,
+                spec: currentPickingItem.spec || '',
+                quantity: qty,
+                quantityChange: -qty,
+                locationId: currentPickingItem.locationId,
+                batchNo: currentPickingItem.batchNo || '',
+                palletId: currentPickingItem.palletId || '',
+                note: '手機版揀貨 - 波次: ' + (currentWave.waveNo || '')
+            });
+            
+            if (qty !== expectedQty) {
+                result.className = 'scan-result info';
+                result.innerText = '⚠️ 數量差異！\n需要: ' + expectedQty + ' / 實際: ' + qty;
+            } else {
+                result.className = 'scan-result success';
+                result.innerText = '✅ 揀貨完成！' + currentPickingItem.productName + ' x ' + qty;
+            }
+            
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            
+            renderPickingList();
+            
+            // 1.5 秒後顯示下一個項目
+            setTimeout(() => {
+                showCurrentPickingItem();
+            }, 1500);
+        };
+        
+        // 重置揀貨步驟 / 跳過此項
+        window.resetPickingScan = function() {
+            if (currentPickingItem && !currentPickingItem.completed) {
+                if (confirm('確定要跳過此項目？\n\n' + currentPickingItem.productName + ' x ' + currentPickingItem.pickQty)) {
+                    currentPickingItem.shortage = true;
+                    renderPickingList();
+                }
+            }
+            showCurrentPickingItem();
+        };
+        
+        // 原始的單步驟確認 (保留相容性)
         window.confirmPickingScan = async function() {
             const input = document.getElementById('picking-scan');
             const result = document.getElementById('picking-scan-result');
@@ -1060,6 +1336,19 @@
             
             result.className = 'scan-result success';
             result.innerText = '✓ ' + found.productName + ' x ' + found.pickQty;
+            
+            // 📝 記錄出庫異動
+            logInventoryChange({
+                type: 'outbound',
+                productName: found.productName,
+                spec: found.spec || '',
+                quantity: found.pickQty,
+                quantityChange: -found.pickQty,  // 負數表示出庫
+                locationId: found.locationId,
+                batchNo: found.batchNo || '',
+                palletId: found.palletId || '',
+                note: '手機版揀貨 - 波次: ' + (currentWave.waveNo || '')
+            });
             
             renderPickingList();
             input.value = '';
@@ -1207,6 +1496,20 @@
                     
                     result.className = 'scan-result success';
                     result.innerText = '✅ 入庫完成！\n' + currentInboundTask.productName + ' @ ' + currentInboundTask.locationId;
+                    
+                    // 📝 記錄入庫異動
+                    logInventoryChange({
+                        type: 'inbound',
+                        productName: currentInboundTask.productName,
+                        spec: currentInboundTask.spec || '',
+                        quantity: currentInboundTask.quantity,
+                        quantityChange: currentInboundTask.quantity,
+                        locationId: currentInboundTask.locationId,
+                        batchNo: currentInboundTask.batchNo || '',
+                        palletId: currentInboundTask.palletId || '',
+                        expDate: currentInboundTask.expDate || '',
+                        note: '手機版入庫確認'
+                    });
                     
                     if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
                     
@@ -1388,6 +1691,17 @@
             
             result.className = 'scan-result success';
             result.innerText = '✓ ' + found.from + ' → ' + found.to;
+            
+            // 📝 記錄調度異動
+            logInventoryChange({
+                type: 'move',
+                productName: currentDispatch.productName || '',
+                fromLocation: found.from,
+                toLocation: found.to,
+                locationId: found.to,
+                palletId: found.palletId || scanned,
+                note: '手機版調度執行'
+            });
             
             renderDispatchList();
             input.value = '';
