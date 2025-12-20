@@ -609,9 +609,10 @@
                     <span style="color:#3b82f6;font-weight:bold;">步驟 1/3</span> - 掃描儲位確認
                 </div>
                 <div class="scan-input-wrap">
-                    <input type="text" id="picking-location-scan" class="scan-input" placeholder="掃描儲位條碼">
+                    <input type="text" id="picking-location-scan" class="scan-input" placeholder="掃描或輸入如 IA011" style="text-transform:uppercase;"
+                           oninput="autoFormatAndCheck(this, 'location', function(){ confirmPickingLocation(); })"
+                           onkeypress="if(event.keyCode==13){confirmPickingLocation();return false;}">
                     <button class="camera-btn" onclick="openCameraScanner('picking-location-scan')"><i class="fa-solid fa-camera"></i></button>
-                    <button class="scan-btn" onclick="confirmPickingLocation()"><i class="fa-solid fa-check"></i></button>
                 </div>
             </div>
             
@@ -621,9 +622,10 @@
                     <span style="color:#a855f7;font-weight:bold;">步驟 2/3</span> - 掃描板號確認
                 </div>
                 <div class="scan-input-wrap">
-                    <input type="text" id="picking-pallet-scan" class="scan-input" placeholder="掃描板號條碼">
+                    <input type="text" id="picking-pallet-scan" class="scan-input" placeholder="掃描或輸入棧板編號" style="text-transform:uppercase;"
+                           oninput="autoFormatAndCheck(this, 'pallet', function(){ confirmPickingPallet(); })"
+                           onkeypress="if(event.keyCode==13){confirmPickingPallet();return false;}">
                     <button class="camera-btn" onclick="openCameraScanner('picking-pallet-scan')"><i class="fa-solid fa-camera"></i></button>
-                    <button class="scan-btn" onclick="confirmPickingPallet()"><i class="fa-solid fa-check"></i></button>
                 </div>
             </div>
             
@@ -682,11 +684,12 @@
                     <span style="color:#3b82f6;font-weight:bold;">步驟 1/2</span> - 掃描板號
                 </div>
                 <div class="scan-input-wrap">
-                    <input type="text" id="inbound-pallet-scan" class="scan-input" placeholder="掃描入庫板號">
+                    <input type="text" id="inbound-pallet-scan" class="scan-input" placeholder="掃描或輸入棧板編號" style="text-transform:uppercase;"
+                           oninput="autoFormatAndCheck(this, 'pallet', function(){ confirmInboundPallet(); })"
+                           onkeypress="if(event.keyCode==13){confirmInboundPallet();return false;}">
                     <button class="camera-btn" onclick="openCameraScanner('inbound-pallet-scan')"><i class="fa-solid fa-camera"></i></button>
-                    <button class="scan-btn" onclick="confirmInboundPallet()"><i class="fa-solid fa-check"></i></button>
                 </div>
-                <p class="scan-hint">第一步：掃描標籤上的板號條碼</p>
+                <p class="scan-hint">掃描板號，或從下方任務列表點擊執行</p>
             </div>
             
             <!-- Step 2: 掃描儲位 -->
@@ -709,11 +712,12 @@
                     </div>
                 </div>
                 <div class="scan-input-wrap">
-                    <input type="text" id="inbound-location-scan" class="scan-input" placeholder="掃描儲位條碼">
+                    <input type="text" id="inbound-location-scan" class="scan-input" placeholder="掃描儲位 如:IA011" 
+                           oninput="autoFormatAndCheck(this, 'location', function(){ confirmInboundLocation(); })"
+                           onkeypress="if(event.keyCode==13){confirmInboundLocation();return false;}">
                     <button class="camera-btn" onclick="openCameraScanner('inbound-location-scan')"><i class="fa-solid fa-camera"></i></button>
-                    <button class="scan-btn" onclick="confirmInboundLocation()"><i class="fa-solid fa-check"></i></button>
                 </div>
-                <p class="scan-hint">第二步：到達儲位後，掃描儲位條碼確認</p>
+                <p class="scan-hint">掃描或輸入儲位（自動判斷）</p>
                 <button onclick="resetInboundStep()" style="width:100%;padding:10px;background:transparent;border:1px solid #475569;border-radius:8px;color:#94a3b8;margin-top:10px;cursor:pointer;">
                     <i class="fa-solid fa-rotate-left"></i> 重新掃描
                 </button>
@@ -722,9 +726,54 @@
             <div id="inbound-scan-result" class="scan-result"></div>
         </div>
         
+        <!-- 入庫確認 Modal -->
+        <div id="inbound-confirm-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200;padding:20px;align-items:center;justify-content:center;">
+            <div style="background:#1e293b;border-radius:16px;padding:20px;width:100%;max-width:340px;border:2px solid #3b82f6;">
+                <h3 style="color:white;font-size:18px;font-weight:bold;text-align:center;margin-bottom:16px;">
+                    <i class="fa-solid fa-clipboard-check" style="color:#3b82f6;margin-right:8px;"></i>確認入庫資料
+                </h3>
+                
+                <!-- 板號大字顯示 -->
+                <div style="background:#0f172a;border:2px solid #f59e0b;border-radius:12px;padding:16px;text-align:center;margin-bottom:16px;">
+                    <div style="color:#94a3b8;font-size:12px;margin-bottom:4px;">板號 / 單號</div>
+                    <div id="confirm-pallet-id" style="color:#fbbf24;font-size:28px;font-weight:bold;font-family:monospace;letter-spacing:1px;">-</div>
+                </div>
+                
+                <!-- 其他資訊 -->
+                <div style="background:#0f172a;border-radius:10px;padding:12px;margin-bottom:16px;">
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #334155;">
+                        <span style="color:#94a3b8;">品名規格</span>
+                        <span id="confirm-product-name" style="color:white;font-weight:bold;">-</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #334155;">
+                        <span style="color:#94a3b8;">數量</span>
+                        <span id="confirm-quantity" style="color:#10b981;font-weight:bold;">-</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #334155;">
+                        <span style="color:#94a3b8;">批號</span>
+                        <span id="confirm-batch" style="color:white;">-</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;">
+                        <span style="color:#94a3b8;">指定儲位</span>
+                        <span id="confirm-location" style="color:#3b82f6;font-weight:bold;font-size:16px;">-</span>
+                    </div>
+                </div>
+                
+                <!-- 按鈕 -->
+                <div style="display:flex;gap:12px;">
+                    <button onclick="cancelInboundConfirm()" style="flex:1;padding:14px;background:#475569;border:none;border-radius:10px;color:white;font-size:16px;font-weight:bold;">
+                        取消
+                    </button>
+                    <button onclick="confirmInboundTaskAndProceed()" style="flex:2;padding:14px;background:#10b981;border:none;border-radius:10px;color:white;font-size:16px;font-weight:bold;">
+                        <i class="fa-solid fa-check" style="margin-right:6px;"></i>確認，前往儲位
+                    </button>
+                </div>
+            </div>
+        </div>
+        
         <div class="list-section">
             <div class="list-header">
-                <h4>待入庫任務</h4>
+                <h4>👇 點擊任務直接執行</h4>
                 <span class="list-progress" id="inbound-count">0 筆</span>
             </div>
             <div id="inbound-list">
@@ -821,8 +870,9 @@
                     <div style="color:#6ee7b7;font-size:20px;font-weight:bold;">📍 掃描儲位條碼</div>
                 </div>
                 <div class="scan-input-wrap">
-                    <input type="text" id="scan-in-location" class="scan-input" placeholder="掃描儲位 I-A-01-1F" style="text-transform:uppercase;" 
-                           onkeyup="if(event.keyCode===13 || this.value.length>=9) scanInboundStep1();" autofocus>
+                    <input type="text" id="scan-in-location" class="scan-input" placeholder="掃描或輸入如 IA011" style="text-transform:uppercase;" 
+                           oninput="autoFormatAndCheck(this, 'location', function(){ scanInboundStep1(); })"
+                           onkeypress="if(event.keyCode==13){scanInboundStep1();return false;}" autofocus>
                     <button class="camera-btn" onclick="openCameraScanner('scan-in-location')"><i class="fa-solid fa-camera"></i></button>
                 </div>
             </div>
@@ -840,8 +890,9 @@
                     <div style="color:#93c5fd;font-size:20px;font-weight:bold;">📦 掃描棧板插單</div>
                 </div>
                 <div class="scan-input-wrap">
-                    <input type="text" id="scan-in-pallet" class="scan-input" placeholder="掃描插單 QR Code"
-                           onkeyup="if(event.keyCode===13 || this.value.length>=10) scanInboundStep2();">
+                    <input type="text" id="scan-in-pallet" class="scan-input" placeholder="掃描或輸入棧板編號" style="text-transform:uppercase;"
+                           oninput="autoFormatAndCheck(this, 'pallet', function(){ scanInboundStep2(); })"
+                           onkeypress="if(event.keyCode==13){scanInboundStep2();return false;}">
                     <button class="camera-btn" onclick="openCameraScanner('scan-in-pallet')"><i class="fa-solid fa-camera"></i></button>
                 </div>
             </div>
@@ -907,8 +958,9 @@
                     <span style="color:#ea580c;font-weight:bold;">步驟 1</span> - 掃描棧板插單
                 </div>
                 <div class="scan-input-wrap">
-                    <input type="text" id="scan-out-pallet" class="scan-input" placeholder="掃描插單 QR Code"
-                           onkeyup="if(event.keyCode===13 || this.value.length>=10) scanOutboundStep1();" autofocus>
+                    <input type="text" id="scan-out-pallet" class="scan-input" placeholder="掃描或輸入棧板編號" style="text-transform:uppercase;"
+                           oninput="autoFormatAndCheck(this, 'pallet', function(){ scanOutboundStep1(); })"
+                           onkeypress="if(event.keyCode==13){scanOutboundStep1();return false;}" autofocus>
                     <button class="camera-btn" onclick="openCameraScanner('scan-out-pallet')"><i class="fa-solid fa-camera"></i></button>
                 </div>
             </div>
@@ -980,8 +1032,9 @@
                     <span style="color:#3b82f6;font-weight:bold;">步驟 1</span> - 掃描棧板插單
                 </div>
                 <div class="scan-input-wrap">
-                    <input type="text" id="scan-move-pallet" class="scan-input" placeholder="掃描插單 QR Code"
-                           onkeyup="if(event.keyCode===13 || this.value.length>=10) scanMoveStep1();" autofocus>
+                    <input type="text" id="scan-move-pallet" class="scan-input" placeholder="掃描或輸入棧板編號" style="text-transform:uppercase;"
+                           oninput="autoFormatAndCheck(this, 'pallet', function(){ scanMoveStep1(); })"
+                           onkeypress="if(event.keyCode==13){scanMoveStep1();return false;}" autofocus>
                     <button class="camera-btn" onclick="openCameraScanner('scan-move-pallet')"><i class="fa-solid fa-camera"></i></button>
                 </div>
             </div>
@@ -1002,8 +1055,9 @@
                     <span style="color:#10b981;font-weight:bold;">步驟 2</span> - 掃描新儲位條碼
                 </div>
                 <div class="scan-input-wrap">
-                    <input type="text" id="scan-move-new-loc" class="scan-input" placeholder="掃描新儲位" style="text-transform:uppercase;"
-                           onkeyup="if(event.keyCode===13 || this.value.length>=7) scanMoveStep2();">
+                    <input type="text" id="scan-move-new-loc" class="scan-input" placeholder="掃描或輸入如 IA011" style="text-transform:uppercase;"
+                           oninput="autoFormatAndCheck(this, 'location', function(){ scanMoveStep2(); })"
+                           onkeypress="if(event.keyCode==13){scanMoveStep2();return false;}">
                     <button class="camera-btn" onclick="openCameraScanner('scan-move-new-loc')"><i class="fa-solid fa-camera"></i></button>
                 </div>
             </div>
@@ -1045,8 +1099,9 @@
                     <span style="color:#f97316;font-weight:bold;">步驟 1</span> - 掃描數量【少】的插單
                 </div>
                 <div class="scan-input-wrap">
-                    <input type="text" id="scan-merge-less" class="scan-input" placeholder="掃描插單（數量少的）"
-                           onkeyup="if(event.keyCode===13 || this.value.length>=10) scanMergeStep1();" autofocus>
+                    <input type="text" id="scan-merge-less" class="scan-input" placeholder="掃描或輸入棧板編號" style="text-transform:uppercase;"
+                           oninput="autoFormatAndCheck(this, 'pallet', function(){ scanMergeStep1(); })"
+                           onkeypress="if(event.keyCode==13){scanMergeStep1();return false;}" autofocus>
                     <button class="camera-btn" onclick="openCameraScanner('scan-merge-less')"><i class="fa-solid fa-camera"></i></button>
                 </div>
             </div>
@@ -1071,8 +1126,9 @@
                     <span style="color:#a855f7;font-weight:bold;">步驟 2</span> - 掃描數量【多】的插單
                 </div>
                 <div class="scan-input-wrap">
-                    <input type="text" id="scan-merge-more" class="scan-input" placeholder="掃描插單（數量多的）"
-                           onkeyup="if(event.keyCode===13 || this.value.length>=10) scanMergeStep2();">
+                    <input type="text" id="scan-merge-more" class="scan-input" placeholder="掃描或輸入棧板編號" style="text-transform:uppercase;"
+                           oninput="autoFormatAndCheck(this, 'pallet', function(){ scanMergeStep2(); })"
+                           onkeypress="if(event.keyCode==13){scanMergeStep2();return false;}">
                     <button class="camera-btn" onclick="openCameraScanner('scan-merge-more')"><i class="fa-solid fa-camera"></i></button>
                 </div>
             </div>
@@ -1224,6 +1280,10 @@
                 }
                 prevDispatchCount = activeOrders;
                 updateBadges();
+                
+                // 即時更新移板/併板頁面的工單列表
+                if (window.loadMoveOrders) window.loadMoveOrders();
+                if (window.loadMergeOrders) window.loadMergeOrders();
             });
             
             // 監聯入庫任務
@@ -1254,6 +1314,119 @@
             // 畫面提示
             showToast(title + ' - ' + body);
         }
+        
+        // 格式化儲位編號：IA011F → I-A-01-1F
+        // 輸入格式: 區(1碼) + 排(1碼) + 列(1-2碼) + 樓(1碼) + F(可選)
+        // 例: ia011f, IA11F, ke101, kb222 → I-A-01-1F, K-E-10-1F, K-B-22-2F
+        function formatLocationId(input) {
+            if (!input) return '';
+            var s = input.trim().toUpperCase();
+            
+            // 如果已經有正確格式（包含-），直接返回大寫
+            if (s.indexOf('-') !== -1) return s;
+            
+            // 移除所有非字母數字
+            s = s.replace(/[^A-Z0-9]/g, '');
+            
+            // 最少需要5碼
+            if (s.length < 5) return input.toUpperCase();
+            
+            var zone1 = s.charAt(0);  // I, J, K 等
+            var zone2 = s.charAt(1);  // A, B, C 等
+            var rest = s.substring(2); // 剩餘部分: 列號 + 樓層
+            
+            // 移除結尾的 F (如果有)
+            var hasF = rest.charAt(rest.length - 1) === 'F';
+            if (hasF) {
+                rest = rest.substring(0, rest.length - 1);
+            }
+            
+            // rest 現在是純數字，例如: 011, 0112, 11, 101
+            // 最後一個數字是樓層，前面是列號
+            var floorNum = '1';
+            var rowNum = '01';
+            
+            if (rest.length >= 2) {
+                floorNum = rest.charAt(rest.length - 1);  // 最後一個數字是樓層
+                rowNum = rest.substring(0, rest.length - 1);   // 前面是列號
+            } else if (rest.length === 1) {
+                floorNum = rest;
+                rowNum = '01';
+            }
+            
+            // 補零到兩位
+            while (rowNum.length < 2) rowNum = '0' + rowNum;
+            
+            return zone1 + '-' + zone2 + '-' + rowNum + '-' + floorNum + 'F';
+        }
+        
+        // 格式化棧板編號: 大寫並移除特殊字元
+        function formatPalletId(input) {
+            if (!input) return '';
+            return input.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        }
+        
+        // 自動格式化輸入並檢查是否應該自動觸發確認
+        // type: 'location' 或 'pallet'
+        // callback: 確認函數
+        var autoCheckTimer = null;
+        var lastInputLength = {};
+        window.autoFormatAndCheck = function(input, type, callback) {
+            // 清除之前的計時器
+            if (autoCheckTimer) {
+                clearTimeout(autoCheckTimer);
+                autoCheckTimer = null;
+            }
+            
+            var val = input.value.trim().toUpperCase();
+            
+            // 自動大寫
+            if (input.value !== val) {
+                var pos = input.selectionStart;
+                input.value = val;
+                input.setSelectionRange(pos, pos);
+            }
+            
+            if (!val) {
+                lastInputLength[input.id] = 0;
+                return;
+            }
+            
+            // 檢測是否為掃描器輸入（一次輸入多個字符）
+            var prevLen = lastInputLength[input.id] || 0;
+            var isScanner = (val.length - prevLen) > 3;
+            lastInputLength[input.id] = val.length;
+            
+            // 根據類型判斷是否達到完整格式
+            var shouldTrigger = false;
+            
+            if (type === 'location') {
+                // 儲位格式: IA011 (5碼以上) 或 I-A-01-1F
+                var clean = val.replace(/[^A-Z0-9]/g, '');
+                // 完整格式：至少5個字符，且最後是數字（樓層）
+                if (clean.length >= 5 && /[0-9]$/.test(clean)) {
+                    shouldTrigger = true;
+                }
+                // 或者已經是標準格式
+                if (/^[A-Z]-[A-Z]-\d{2}-\d+F$/i.test(val)) {
+                    shouldTrigger = true;
+                }
+            } else if (type === 'pallet') {
+                // 棧板格式: 通常是英數混合，6碼以上
+                var clean = val.replace(/[^A-Z0-9]/g, '');
+                if (clean.length >= 6) {
+                    shouldTrigger = true;
+                }
+            }
+            
+            // 掃描器輸入立即觸發，手動輸入延遲 400ms
+            if (shouldTrigger && callback) {
+                var delay = isScanner ? 50 : 400;
+                autoCheckTimer = setTimeout(function() {
+                    callback();
+                }, delay);
+            }
+        };
         
         // Toast 提示
         window.showToast = function(msg) {
@@ -1291,20 +1464,28 @@
                 function(decodedText) {
                     // 掃描成功
                     if (currentScanTarget) {
-                        document.getElementById(currentScanTarget).value = decodedText;
+                        document.getElementById(currentScanTarget).value = decodedText.toUpperCase();
                     }
                     if (navigator.vibrate) navigator.vibrate(100);
+                    var target = currentScanTarget;
                     stopCameraScanner();
                     
                     // 自動觸發確認
                     setTimeout(function() {
-                        if (currentScanTarget === 'inbound-pallet-scan') confirmInboundPallet();
-                        else if (currentScanTarget === 'inbound-location-scan') confirmInboundLocation();
-                        else if (currentScanTarget === 'picking-location-scan') confirmPickingLocation();
-                        else if (currentScanTarget === 'picking-pallet-scan') confirmPickingPallet();
-                        else if (currentScanTarget === 'picking-scan') confirmPickingScan();
-                        else if (currentScanTarget === 'dispatch-scan') confirmDispatchScan();
-                        else if (currentScanTarget === 'query-input') doInventoryQuery();
+                        if (target === 'inbound-pallet-scan') confirmInboundPallet();
+                        else if (target === 'inbound-location-scan') confirmInboundLocation();
+                        else if (target === 'picking-location-scan') confirmPickingLocation();
+                        else if (target === 'picking-pallet-scan') confirmPickingPallet();
+                        else if (target === 'picking-scan') confirmPickingScan();
+                        else if (target === 'dispatch-scan') confirmDispatchScan();
+                        else if (target === 'query-input') doInventoryQuery();
+                        else if (target === 'scan-in-location') scanInboundStep1();
+                        else if (target === 'scan-in-pallet') scanInboundStep2();
+                        else if (target === 'scan-out-pallet') scanOutboundStep1();
+                        else if (target === 'scan-move-pallet') scanMoveStep1();
+                        else if (target === 'scan-move-new-loc') scanMoveStep2();
+                        else if (target === 'scan-merge-less') scanMergeStep1();
+                        else if (target === 'scan-merge-more') scanMergeStep2();
                     }, 100);
                 },
                 function(errorMessage) { /* 忽略掃描錯誤 */ }
@@ -1414,7 +1595,7 @@
         }
         
         // 載入移板工單
-        function loadMoveOrders() {
+        window.loadMoveOrders = function() {
             var orders = (window.dispatchOrders || []).filter(function(o) {
                 return o.status !== 'done' && (o.type === 'move' || o.orderType === 'move');
             });
@@ -1451,7 +1632,7 @@
         }
         
         // 載入併板工單
-        function loadMergeOrders() {
+        window.loadMergeOrders = function() {
             var orders = (window.dispatchOrders || []).filter(function(o) {
                 return o.status !== 'done' && (o.type === 'merge' || o.orderType === 'merge');
             });
@@ -1993,49 +2174,128 @@
         // ========== 入庫任務 ==========
         
         function loadInboundTasks() {
-            const tasks = (window.inboundTasks || []).filter(t => t.status !== 'done');
+            var tasks = (window.inboundTasks || []).filter(function(t) { return t.status !== 'done'; });
             
             document.getElementById('inbound-count').innerText = tasks.length + ' 筆待入庫';
             
-            const list = document.getElementById('inbound-list');
+            var list = document.getElementById('inbound-list');
             if (tasks.length === 0) {
                 list.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>目前沒有待入庫任務</p></div>';
                 return;
             }
             
-            list.innerHTML = tasks.map(t => `
-                <div class="list-item" data-id="${t.id}">
-                    <div class="item-row">
-                        <span class="item-location">${t.locationId || '待分配'}</span>
-                        <span class="item-status pending">待入庫</span>
-                    </div>
-                    <div class="item-product">${t.productName}</div>
-                    <div class="item-row">
-                        <span class="item-detail">${t.palletId || '-'} | ${t.batchNo || '-'}</span>
-                        <span class="item-qty">${t.quantity}</span>
-                    </div>
-                </div>
-            `).join('');
+            list.innerHTML = tasks.map(function(t) {
+                return '<div class="list-item" style="cursor:pointer;" onclick="selectInboundTask(\'' + t.id + '\')">' +
+                    '<div class="item-row">' +
+                    '<span class="item-location">' + (t.locationId || '待分配') + '</span>' +
+                    '<span class="item-status pending">點擊執行</span>' +
+                    '</div>' +
+                    '<div class="item-product">' + t.productName + '</div>' +
+                    '<div class="item-row">' +
+                    '<span class="item-detail">' + (t.palletId || '-') + ' | ' + (t.batchNo || '-') + '</span>' +
+                    '<span class="item-qty">' + t.quantity + '</span>' +
+                    '</div>' +
+                    '</div>';
+            }).join('');
         }
+        
+        // 點擊任務 - 直接進入掃描步驟（不用確認視窗）
+        window.selectInboundTask = function(taskId) {
+            var task = (window.inboundTasks || []).find(function(t) { return t.id === taskId; });
+            if (!task) { showToast('找不到任務'); return; }
+            
+            // 檢查是否需要財務核准
+            if (task.approvalStatus === 'pending') {
+                showToast('⚠️ 此入庫單尚未經財務核准');
+                return;
+            }
+            
+            // 直接設定任務並進入掃描步驟
+            currentInboundTask = task;
+            
+            // 顯示任務資訊
+            document.getElementById('inbound-show-product').innerText = task.productName + (task.spec ? ' / ' + task.spec : '');
+            document.getElementById('inbound-show-qty').innerText = (task.quantity || 0) + ' 件';
+            document.getElementById('inbound-show-location').innerText = task.locationId || '-';
+            
+            // 跳到 Step 2
+            document.getElementById('inbound-step1').style.display = 'none';
+            document.getElementById('inbound-step2').style.display = 'block';
+            
+            var result = document.getElementById('inbound-scan-result');
+            result.className = 'scan-result info';
+            result.innerHTML = '<div style="text-align:center;">' +
+                '<div style="color:#22c55e;font-size:16px;font-weight:bold;">📍 請前往儲位</div>' +
+                '<div style="color:#fbbf24;font-size:24px;font-weight:bold;margin-top:4px;">' + task.locationId + '</div>' +
+                '<div style="color:#94a3b8;font-size:12px;margin-top:4px;">到達後掃描儲位條碼</div>' +
+                '</div>';
+            
+            setTimeout(function() { document.getElementById('inbound-location-scan').focus(); }, 100);
+            if (navigator.vibrate) navigator.vibrate(50);
+            playBeep();
+        };
+        
+        // 確認後進入 Step 2
+        window.confirmInboundTaskAndProceed = function() {
+            var task = window.pendingInboundTask;
+            if (!task) return;
+            
+            // 關閉 Modal
+            document.getElementById('inbound-confirm-modal').style.display = 'none';
+            
+            currentInboundTask = task;
+            
+            // 顯示任務資訊
+            document.getElementById('inbound-show-product').innerText = task.productName + (task.spec ? ' / ' + task.spec : '');
+            document.getElementById('inbound-show-qty').innerText = (task.quantity || 0) + ' 件';
+            document.getElementById('inbound-show-location').innerText = task.locationId || '-';
+            
+            // 跳到 Step 2
+            document.getElementById('inbound-step1').style.display = 'none';
+            document.getElementById('inbound-step2').style.display = 'block';
+            
+            var result = document.getElementById('inbound-scan-result');
+            result.className = 'scan-result info';
+            result.innerHTML = '<div style="text-align:center;">' +
+                '<div style="color:#22c55e;font-size:16px;font-weight:bold;">📍 請前往儲位</div>' +
+                '<div style="color:#fbbf24;font-size:24px;font-weight:bold;margin-top:4px;">' + task.locationId + '</div>' +
+                '<div style="color:#94a3b8;font-size:12px;margin-top:4px;">到達後掃描儲位條碼確認</div>' +
+                '</div>';
+            
+            setTimeout(function() { document.getElementById('inbound-location-scan').focus(); }, 100);
+            playBeep();
+        };
+        
+        // 取消確認
+        window.cancelInboundConfirm = function() {
+            document.getElementById('inbound-confirm-modal').style.display = 'none';
+            window.pendingInboundTask = null;
+        };
         
         // ========== 入庫雙重掃描驗證 (v3.0 升級) ==========
         let currentInboundTask = null;
         
         window.confirmInboundPallet = async function() {
-            const input = document.getElementById('inbound-pallet-scan');
-            const result = document.getElementById('inbound-scan-result');
-            const scanned = input.value.trim();
+            var input = document.getElementById('inbound-pallet-scan');
+            var result = document.getElementById('inbound-scan-result');
+            var rawInput = input.value.trim();
             
-            if (!scanned) {
+            if (!rawInput) {
                 result.className = 'scan-result error';
                 result.innerText = '請掃描板號';
                 return;
             }
             
-            // 查找任務
-            const task = (window.inboundTasks || []).find(t => 
-                t.status !== 'done' && (t.palletId === scanned || t.orderNo === scanned)
-            );
+            var scanned = formatPalletId(rawInput);
+            
+            // 查找任務（同時比對格式化前後的值）
+            var task = (window.inboundTasks || []).find(function(t) {
+                if (t.status === 'done') return false;
+                var taskPallet = formatPalletId(t.palletId || '');
+                var taskOrder = formatPalletId(t.orderNo || '');
+                return taskPallet === scanned || taskOrder === scanned || 
+                       t.palletId === rawInput || t.orderNo === rawInput;
+            });
             
             if (!task) {
                 result.className = 'scan-result error';
@@ -2072,11 +2332,11 @@
         };
         
         window.confirmInboundLocation = async function() {
-            const input = document.getElementById('inbound-location-scan');
-            const result = document.getElementById('inbound-scan-result');
-            const scanned = input.value.trim().toUpperCase();
+            var input = document.getElementById('inbound-location-scan');
+            var result = document.getElementById('inbound-scan-result');
+            var rawInput = input.value.trim();
             
-            if (!scanned) {
+            if (!rawInput) {
                 result.className = 'scan-result error';
                 result.innerText = '請掃描儲位條碼';
                 return;
@@ -2089,28 +2349,20 @@
                 return;
             }
             
-            const expected = (currentInboundTask.locationId || '').toUpperCase();
+            // 格式化輸入的儲位
+            var scanned = formatLocationId(rawInput);
+            var expected = (currentInboundTask.locationId || '').toUpperCase();
             
-            if (scanned === expected) {
+            // 同時比對格式化後和原始格式
+            if (scanned === expected || formatLocationId(expected) === scanned) {
                 // 儲位正確，完成入庫
                 try {
                     await window.updateDoc(window.doc(window.db, 'inboundTasks', currentInboundTask.id), {
                         status: 'done',
                         confirmedAt: new Date().toISOString(),
                         confirmedBy: window.currentUser ? window.currentUser.email : 'operator',
-                        confirmedLocation: scanned
+                        confirmedLocation: expected
                     });
-                    
-                    // 顯示成功訊息和操作按鈕
-                    result.className = 'scan-result';
-                    result.innerHTML = '<div style="background:#065f46;border-radius:10px;padding:16px;text-align:center;">' +
-                        '<div style="font-size:32px;margin-bottom:8px;">✅</div>' +
-                        '<div style="color:white;font-size:16px;font-weight:bold;">' + currentInboundTask.productName + '</div>' +
-                        '<div style="color:#6ee7b7;font-size:14px;">' + currentInboundTask.locationId + '</div>' +
-                        '<div style="display:flex;gap:10px;margin-top:12px;">' +
-                        '<button onclick="resetInboundStep();loadInboundTasks();" style="flex:1;padding:10px;background:#10b981;border:none;border-radius:8px;color:white;font-weight:bold;font-size:14px;">繼續入庫</button>' +
-                        '<button onclick="goBack()" style="flex:1;padding:10px;background:#475569;border:none;border-radius:8px;color:white;font-weight:bold;font-size:14px;">回主選單</button>' +
-                        '</div></div>';
                     
                     // 📝 記錄入庫異動
                     logInventoryChange({
@@ -2126,7 +2378,30 @@
                         note: '手機版入庫確認'
                     });
                     
+                    // 震動+音效
                     if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                    playBeep('success');
+                    
+                    // 顯示快速成功訊息
+                    showToast('✅ ' + currentInboundTask.productName + ' 入庫完成');
+                    
+                    // 自動重置並載入下一個任務
+                    resetInboundStep();
+                    loadInboundTasks();
+                    
+                    // 檢查是否還有待辦任務
+                    var remaining = (window.inboundTasks || []).filter(function(t) { 
+                        return t.status !== 'done' && t.id !== currentInboundTask.id; 
+                    });
+                    
+                    if (remaining.length > 0) {
+                        result.className = 'scan-result success';
+                        result.innerHTML = '✅ 入庫完成！還有 ' + remaining.length + ' 筆待處理';
+                    } else {
+                        result.className = 'scan-result success';
+                        result.innerHTML = '🎉 太棒了！所有入庫任務已完成';
+                    }
+                    
                 } catch (err) {
                     result.className = 'scan-result error';
                     result.innerText = '❌ 確認失敗: ' + err.message;
@@ -2451,91 +2726,7 @@
         };
         
 
-        // ========== 操作回饋系統 ==========
-        // 震動回饋
-        window.vibrate = function(pattern) {
-            if (navigator.vibrate) {
-                navigator.vibrate(pattern || 50);
-            }
-        };
-        
-        // 成功音效 (使用 Web Audio API)
-        window.playBeep = function(type) {
-            try {
-                var ctx = new (window.AudioContext || window.webkitAudioContext)();
-                var osc = ctx.createOscillator();
-                var gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                
-                if (type === 'success') {
-                    osc.frequency.value = 880; // 高音
-                    gain.gain.value = 0.3;
-                    osc.start();
-                    setTimeout(function() { osc.frequency.value = 1100; }, 100);
-                    setTimeout(function() { osc.stop(); ctx.close(); }, 200);
-                    vibrate([50, 30, 50]); // 短-停-短
-                } else if (type === 'error') {
-                    osc.frequency.value = 220; // 低音
-                    gain.gain.value = 0.3;
-                    osc.start();
-                    setTimeout(function() { osc.stop(); ctx.close(); }, 300);
-                    vibrate([200, 100, 200]); // 長震動
-                } else {
-                    // 一般掃描音
-                    osc.frequency.value = 660;
-                    gain.gain.value = 0.2;
-                    osc.start();
-                    setTimeout(function() { osc.stop(); ctx.close(); }, 80);
-                    vibrate(30);
-                }
-            } catch(e) { console.log('Audio not supported'); }
-        };
-        
-        // 自動聚焦並選取
-        window.focusAndSelect = function(id) {
-            setTimeout(function() {
-                var el = document.getElementById(id);
-                if (el) {
-                    el.focus();
-                    el.select();
-                }
-            }, 100);
-        };
 
-
-
-        // ========== 觸覺與音效反饋 ==========
-        window.vibrate = function(pattern) {
-            if (navigator.vibrate) {
-                navigator.vibrate(pattern || 50);
-            }
-        };
-        
-        window.playBeep = function(success) {
-            try {
-                var ctx = new (window.AudioContext || window.webkitAudioContext)();
-                var osc = ctx.createOscillator();
-                var gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.frequency.value = success ? 800 : 300;
-                osc.type = 'sine';
-                gain.gain.value = 0.3;
-                osc.start();
-                osc.stop(ctx.currentTime + (success ? 0.1 : 0.3));
-            } catch(e) {}
-        };
-        
-        window.successFeedback = function() {
-            vibrate(50);
-            playBeep(true);
-        };
-        
-        window.errorFeedback = function() {
-            vibrate([100, 50, 100]);
-            playBeep(false);
-        };
 
         // ========== 自動掃描觸發（無需按確認鍵）==========
         // 條碼槍通常會在掃描後自動送出 Enter 鍵
@@ -2624,34 +2815,15 @@
             merge: { less: null, more: null }
         };
 
-        // 操作反饋 - 震動和音效
-        window.vibrateSuccess = function() {
-            if (navigator.vibrate) navigator.vibrate(100);
-        };
         
-        window.vibrateError = function() {
-            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-        };
-        
-        window.playBeep = function() {
-            try {
-                var ctx = new (window.AudioContext || window.webkitAudioContext)();
-                var osc = ctx.createOscillator();
-                var gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.frequency.value = 1000;
-                gain.gain.value = 0.3;
-                osc.start();
-                setTimeout(function() { osc.stop(); ctx.close(); }, 100);
-            } catch(e) {}
-        };
 
         
         // ----- 入庫作業 -----
         window.scanInboundStep1 = function() {
-            var loc = document.getElementById('scan-in-location').value.trim().toUpperCase();
-            if (!loc || loc.length < 8) return; // 儲位格式如 I-A-01-1F
+            var rawLoc = document.getElementById('scan-in-location').value.trim();
+            if (!rawLoc || rawLoc.length < 5) return; // 最少5碼如 IA011
+            var loc = formatLocationId(rawLoc);
+            if (!loc || loc.length < 8) { showToast('儲位格式不正確'); return; }
             
             scanData.inbound.location = loc;
             document.getElementById('scan-in-loc-display').innerText = loc;
@@ -2663,8 +2835,9 @@
         };
         
         window.scanInboundStep2 = async function() {
-            var palletId = document.getElementById('scan-in-pallet').value.trim().toUpperCase();
-            if (!palletId) { showToast('請掃描插單'); return; }
+            var rawId = document.getElementById('scan-in-pallet').value.trim();
+            if (!rawId) { showToast('請掃描插單'); return; }
+            var palletId = formatPalletId(rawId);
             
             var loc = scanData.inbound.location;
             var result = document.getElementById('scan-in-result');
@@ -2780,8 +2953,9 @@
         
         // ----- 出庫作業 -----
         window.scanOutboundStep1 = async function() {
-            var palletId = document.getElementById('scan-out-pallet').value.trim().toUpperCase();
-            if (!palletId) { showToast('請掃描插單'); return; }
+            var rawId = document.getElementById('scan-out-pallet').value.trim();
+            if (!rawId) { showToast('請掃描插單'); return; }
+            var palletId = formatPalletId(rawId);
             
             var result = document.getElementById('scan-out-result');
             
@@ -2952,8 +3126,9 @@
         
         // ----- 移板作業 -----
         window.scanMoveStep1 = async function() {
-            var palletId = document.getElementById('scan-move-pallet').value.trim().toUpperCase();
-            if (!palletId) { showToast('請掃描插單'); return; }
+            var rawId = document.getElementById('scan-move-pallet').value.trim();
+            if (!rawId) { showToast('請掃描插單'); return; }
+            var palletId = formatPalletId(rawId);
             
             var result = document.getElementById('scan-move-result');
             
@@ -3003,8 +3178,9 @@
         };
         
         window.scanMoveStep2 = async function() {
-            var newLoc = document.getElementById('scan-move-new-loc').value.trim().toUpperCase();
-            if (!newLoc) { showToast('請掃描新儲位'); return; }
+            var rawLoc = document.getElementById('scan-move-new-loc').value.trim();
+            if (!rawLoc) { showToast('請掃描新儲位'); return; }
+            var newLoc = formatLocationId(rawLoc);
             
             var pallet = scanData.move.pallet;
             var oldLoc = scanData.move.oldLoc;
@@ -3054,8 +3230,9 @@
         
         // ----- 併板作業 -----
         window.scanMergeStep1 = async function() {
-            var palletId = document.getElementById('scan-merge-less').value.trim().toUpperCase();
-            if (!palletId) { showToast('請掃描插單'); return; }
+            var rawId = document.getElementById('scan-merge-less').value.trim();
+            if (!rawId) { showToast('請掃描插單'); return; }
+            var palletId = formatPalletId(rawId);
             
             var result = document.getElementById('scan-merge-result');
             
@@ -3106,8 +3283,9 @@
         };
         
         window.scanMergeStep2 = async function() {
-            var palletId = document.getElementById('scan-merge-more').value.trim().toUpperCase();
-            if (!palletId) { showToast('請掃描插單'); return; }
+            var rawId = document.getElementById('scan-merge-more').value.trim();
+            if (!rawId) { showToast('請掃描插單'); return; }
+            var palletId = formatPalletId(rawId);
             
             var result = document.getElementById('scan-merge-result');
             
