@@ -794,8 +794,8 @@
                     <div style="color:#6ee7b7;font-size:20px;font-weight:bold;">📍 掃描儲位條碼</div>
                 </div>
                 <div class="scan-input-wrap">
-                    <input type="text" id="scan-in-location" class="scan-input" placeholder="掃描儲位 A-01-03" style="text-transform:uppercase;" 
-                           onkeyup="if(event.keyCode===13 || this.value.length>=7) scanInboundStep1();" autofocus>
+                    <input type="text" id="scan-in-location" class="scan-input" placeholder="掃描儲位 I-A-01-1F" style="text-transform:uppercase;" 
+                           onkeyup="if(event.keyCode===13 || this.value.length>=9) scanInboundStep1();" autofocus>
                     <button class="camera-btn" onclick="openCameraScanner('scan-in-location')"><i class="fa-solid fa-camera"></i></button>
                 </div>
             </div>
@@ -817,6 +817,41 @@
                            onkeyup="if(event.keyCode===13 || this.value.length>=10) scanInboundStep2();">
                     <button class="camera-btn" onclick="openCameraScanner('scan-in-pallet')"><i class="fa-solid fa-camera"></i></button>
                 </div>
+            </div>
+            
+            <!-- Step 3: 確認件數 -->
+            <div id="scan-in-step3" style="display:none;">
+                <div style="background:rgba(16,185,129,0.2);border:1px solid #10b981;border-radius:10px;padding:10px;margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;font-size:13px;">
+                        <span style="color:#6ee7b7;">✅ 儲位</span>
+                        <span id="scan-in-loc-display2" style="color:#10b981;font-weight:bold;">-</span>
+                    </div>
+                </div>
+                <div style="background:rgba(245,158,11,0.15);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;">
+                    <div style="color:#f59e0b;font-size:14px;margin-bottom:4px;">步驟 3</div>
+                    <div style="color:#fcd34d;font-size:20px;font-weight:bold;">✍️ 確認件數</div>
+                </div>
+                <div style="background:#1e3a5f;border:1px solid #3b82f6;border-radius:10px;padding:12px;margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                        <span style="color:#94a3b8;">品名</span>
+                        <span id="scan-in-product-name" style="color:white;font-weight:bold;">-</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                        <span style="color:#94a3b8;">規格</span>
+                        <span id="scan-in-spec" style="color:white;">-</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;">
+                        <span style="color:#94a3b8;">批號</span>
+                        <span id="scan-in-batch" style="color:white;">-</span>
+                    </div>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="color:#94a3b8;font-size:13px;display:block;margin-bottom:6px;">入庫件數</label>
+                    <input type="number" id="scan-in-qty-input" class="scan-input" placeholder="輸入件數" inputmode="numeric" style="font-size:24px;text-align:center;font-weight:bold;">
+                </div>
+                <button onclick="confirmScanInbound()" style="width:100%;padding:16px;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:12px;color:white;font-size:18px;font-weight:bold;cursor:pointer;">
+                    <i class="fa-solid fa-check-circle"></i> 確認入庫
+                </button>
             </div>
             
             <div id="scan-in-result" class="scan-result"></div>
@@ -1029,7 +1064,7 @@
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, getDoc, doc, updateDoc, deleteDoc, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = { 
@@ -1048,6 +1083,7 @@
         window.db = db;
         window.collection = collection;
         window.getDocs = getDocs;
+        window.getDoc = getDoc;
         window.doc = doc;
         window.updateDoc = updateDoc;
         window.deleteDoc = deleteDoc;
@@ -2353,7 +2389,7 @@
         // ----- 入庫作業 -----
         window.scanInboundStep1 = function() {
             var loc = document.getElementById('scan-in-location').value.trim().toUpperCase();
-            if (!loc || loc.length < 5) return; // 長度不足不觸發
+            if (!loc || loc.length < 8) return; // 儲位格式如 I-A-01-1F
             
             scanData.inbound.location = loc;
             document.getElementById('scan-in-loc-display').innerText = loc;
@@ -2371,40 +2407,94 @@
             var loc = scanData.inbound.location;
             var result = document.getElementById('scan-in-result');
             
-            // 查找棧板
-            var pallet = window.allPallets.find(function(p) {
-                return p.palletId === palletId || p.id === palletId;
-            });
+            // 查找棧板 - 從多個來源查找
+            var pallet = null;
+            if (window.allPallets && window.allPallets.length > 0) {
+                pallet = window.allPallets.find(function(p) {
+                    return p.palletId === palletId || p.id === palletId;
+                });
+            }
+            if (!pallet && window.pallets && window.pallets.length > 0) {
+                pallet = window.pallets.find(function(p) {
+                    return p.palletId === palletId || p.id === palletId;
+                });
+            }
+            
+            // 如果找不到，嘗試從 Firebase 查詢
+            if (!pallet) {
+                try {
+                    var docRef = window.doc(window.db, "pallets", palletId);
+                    var docSnap = await window.getDoc(docRef);
+                    if (docSnap.exists()) {
+                        pallet = { id: docSnap.id, ...docSnap.data() };
+                    }
+                } catch(e) { console.log('Firebase查詢失敗:', e); }
+            }
             
             if (!pallet) {
                 feedbackError();
-                playBeep('error'); errorFeedback(); result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板</div>';
+                result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板: ' + palletId + '</div>';
                 document.getElementById('scan-in-pallet').value = '';
                 document.getElementById('scan-in-pallet').focus();
                 return;
             }
             
+            // 儲存棧板資訊到 scanData
+            scanData.inbound.pallet = pallet;
+            
+            // 顯示 Step 3: 確認件數
+            document.getElementById('scan-in-step2').style.display = 'none';
+            document.getElementById('scan-in-step3').style.display = 'block';
+            
+            // 填入棧板資訊
+            document.getElementById('scan-in-loc-display2').innerText = scanData.inbound.location;
+            document.getElementById('scan-in-product-name').innerText = pallet.productName || '-';
+            document.getElementById('scan-in-spec').innerText = pallet.spec || '-';
+            document.getElementById('scan-in-batch').innerText = pallet.batchNo || '-';
+            document.getElementById('scan-in-qty-input').value = pallet.quantity || '';
+            document.getElementById('scan-in-qty-input').placeholder = '預設: ' + (pallet.quantity || 0);
+            
+            feedbackSuccess();
+            setTimeout(function() { document.getElementById('scan-in-qty-input').focus(); }, 100);
+            result.innerHTML = '';
+        };
+        
+        // 入庫最終確認（含件數）
+        window.confirmScanInbound = async function() {
+            var pallet = scanData.inbound.pallet;
+            var loc = scanData.inbound.location;
+            if (!pallet || !loc) { showToast('請先掃描儲位和棧板'); return; }
+            
+            var qty = parseInt(document.getElementById('scan-in-qty-input').value) || pallet.quantity;
+            if (qty <= 0) { showToast('請輸入有效數量'); return; }
+            
+            var result = document.getElementById('scan-in-result');
+            
             try {
-                await window.updateDoc(window.doc(window.db, "pallets", pallet.id), { locationId: loc });
+                await window.updateDoc(window.doc(window.db, "pallets", pallet.id), { 
+                    locationId: loc,
+                    quantity: qty
+                });
                 
                 // 記錄異動
                 await window.addDoc(window.collection(window.db, 'inventoryLogs'), {
                     type: 'inbound', productName: pallet.productName, spec: pallet.spec || '',
-                    quantity: pallet.quantity, quantityChange: pallet.quantity, locationId: loc,
-                    batchNo: pallet.batchNo || '', palletId: palletId, note: '手機版掃描入庫',
+                    quantity: qty, quantityChange: qty, locationId: loc,
+                    batchNo: pallet.batchNo || '', palletId: pallet.palletId || pallet.id, 
+                    note: '手機版掃描入庫',
                     operator: window.currentUser || 'mobile', timestamp: new Date()
                 });
                 
                 result.innerHTML = '<div style="background:#065f46;border-radius:10px;padding:16px;text-align:center;">' +
                     '<div style="font-size:32px;margin-bottom:8px;">✅</div>' +
                     '<div style="color:white;font-size:18px;font-weight:bold;">' + pallet.productName + '</div>' +
-                    '<div style="color:#6ee7b7;">' + pallet.quantity + ' 件</div>' +
+                    '<div style="color:#6ee7b7;">' + qty + ' 件</div>' +
                     '<div style="color:#10b981;font-weight:bold;margin-top:8px;">已綁定至 ' + loc + '</div></div>';
                 
-                vibrateSuccess(); playBeep(); feedbackSuccess();
-                successFeedback(); showToast('✅ 入庫成功！');
+                vibrateSuccess(); playBeep(); 
+                showToast('✅ 入庫成功！');
                 
-                // 2秒後自動重置，準備下一筆
+                // 2秒後自動重置
                 setTimeout(function() { resetScanInbound(); }, 2000);
             } catch (err) {
                 result.innerHTML = '<div style="color:#f87171;">❌ 入庫失敗: ' + err.message + '</div>';
@@ -2412,27 +2502,55 @@
         };
         
         window.resetScanInbound = function() {
-            scanData.inbound = { location: null };
+            scanData.inbound = { location: null, pallet: null };
             document.getElementById('scan-in-location').value = '';
             document.getElementById('scan-in-pallet').value = '';
+            var qtyInput = document.getElementById('scan-in-qty-input');
+            if (qtyInput) qtyInput.value = '';
             document.getElementById('scan-in-step1').style.display = 'block';
             document.getElementById('scan-in-step2').style.display = 'none';
+            var step3 = document.getElementById('scan-in-step3');
+            if (step3) step3.style.display = 'none';
             document.getElementById('scan-in-result').innerHTML = '';
             setTimeout(function() { document.getElementById('scan-in-location').focus(); }, 100);
         };
         
         // ----- 出庫作業 -----
-        window.scanOutboundStep1 = function() {
+        window.scanOutboundStep1 = async function() {
             var palletId = document.getElementById('scan-out-pallet').value.trim().toUpperCase();
             if (!palletId) { showToast('請掃描插單'); return; }
             
-            var pallet = window.allPallets.find(function(p) {
-                return p.palletId === palletId || p.id === palletId;
-            });
-            
             var result = document.getElementById('scan-out-result');
+            
+            // 從多個來源查找棧板
+            var pallet = null;
+            if (window.allPallets && window.allPallets.length > 0) {
+                pallet = window.allPallets.find(function(p) {
+                    return p.palletId === palletId || p.id === palletId;
+                });
+            }
+            if (!pallet && window.pallets && window.pallets.length > 0) {
+                pallet = window.pallets.find(function(p) {
+                    return p.palletId === palletId || p.id === palletId;
+                });
+            }
+            
+            // 如果找不到，嘗試從 Firebase 查詢
             if (!pallet) {
-                playBeep('error'); errorFeedback(); result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板</div>';
+                try {
+                    result.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:8px;"><i class="fa-solid fa-spinner fa-spin"></i> 查詢中...</div>';
+                    var docRef = window.doc(window.db, "pallets", palletId);
+                    var docSnap = await window.getDoc(docRef);
+                    if (docSnap.exists()) {
+                        pallet = { id: docSnap.id, ...docSnap.data() };
+                    }
+                } catch(e) { console.log('Firebase查詢失敗:', e); }
+            }
+            
+            if (!pallet) {
+                errorFeedback(); 
+                result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板: ' + palletId + '</div>';
+                document.getElementById('scan-out-pallet').value = '';
                 return;
             }
             
@@ -2568,17 +2686,41 @@
         };
         
         // ----- 移板作業 -----
-        window.scanMoveStep1 = function() {
+        window.scanMoveStep1 = async function() {
             var palletId = document.getElementById('scan-move-pallet').value.trim().toUpperCase();
             if (!palletId) { showToast('請掃描插單'); return; }
             
-            var pallet = window.allPallets.find(function(p) {
-                return p.palletId === palletId || p.id === palletId;
-            });
-            
             var result = document.getElementById('scan-move-result');
+            
+            // 從多個來源查找棧板
+            var pallet = null;
+            if (window.allPallets && window.allPallets.length > 0) {
+                pallet = window.allPallets.find(function(p) {
+                    return p.palletId === palletId || p.id === palletId;
+                });
+            }
+            if (!pallet && window.pallets && window.pallets.length > 0) {
+                pallet = window.pallets.find(function(p) {
+                    return p.palletId === palletId || p.id === palletId;
+                });
+            }
+            
+            // 如果找不到，嘗試從 Firebase 查詢
             if (!pallet) {
-                playBeep('error'); errorFeedback(); result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板</div>';
+                try {
+                    result.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:8px;"><i class="fa-solid fa-spinner fa-spin"></i> 查詢中...</div>';
+                    var docRef = window.doc(window.db, "pallets", palletId);
+                    var docSnap = await window.getDoc(docRef);
+                    if (docSnap.exists()) {
+                        pallet = { id: docSnap.id, ...docSnap.data() };
+                    }
+                } catch(e) { console.log('Firebase查詢失敗:', e); }
+            }
+            
+            if (!pallet) {
+                errorFeedback(); 
+                result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板: ' + palletId + '</div>';
+                document.getElementById('scan-move-pallet').value = '';
                 return;
             }
             
@@ -2643,17 +2785,41 @@
         };
         
         // ----- 併板作業 -----
-        window.scanMergeStep1 = function() {
+        window.scanMergeStep1 = async function() {
             var palletId = document.getElementById('scan-merge-less').value.trim().toUpperCase();
             if (!palletId) { showToast('請掃描插單'); return; }
             
-            var pallet = window.allPallets.find(function(p) {
-                return p.palletId === palletId || p.id === palletId;
-            });
-            
             var result = document.getElementById('scan-merge-result');
+            
+            // 從多個來源查找棧板
+            var pallet = null;
+            if (window.allPallets && window.allPallets.length > 0) {
+                pallet = window.allPallets.find(function(p) {
+                    return p.palletId === palletId || p.id === palletId;
+                });
+            }
+            if (!pallet && window.pallets && window.pallets.length > 0) {
+                pallet = window.pallets.find(function(p) {
+                    return p.palletId === palletId || p.id === palletId;
+                });
+            }
+            
+            // 如果找不到，嘗試從 Firebase 查詢
             if (!pallet) {
-                playBeep('error'); errorFeedback(); result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板</div>';
+                try {
+                    result.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:8px;"><i class="fa-solid fa-spinner fa-spin"></i> 查詢中...</div>';
+                    var docRef = window.doc(window.db, "pallets", palletId);
+                    var docSnap = await window.getDoc(docRef);
+                    if (docSnap.exists()) {
+                        pallet = { id: docSnap.id, ...docSnap.data() };
+                    }
+                } catch(e) { console.log('Firebase查詢失敗:', e); }
+            }
+            
+            if (!pallet) {
+                errorFeedback(); 
+                result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板: ' + palletId + '</div>';
+                document.getElementById('scan-merge-less').value = '';
                 return;
             }
             
@@ -2671,17 +2837,41 @@
             result.innerHTML = '';
         };
         
-        window.scanMergeStep2 = function() {
+        window.scanMergeStep2 = async function() {
             var palletId = document.getElementById('scan-merge-more').value.trim().toUpperCase();
             if (!palletId) { showToast('請掃描插單'); return; }
             
-            var pallet = window.allPallets.find(function(p) {
-                return p.palletId === palletId || p.id === palletId;
-            });
-            
             var result = document.getElementById('scan-merge-result');
+            
+            // 從多個來源查找棧板
+            var pallet = null;
+            if (window.allPallets && window.allPallets.length > 0) {
+                pallet = window.allPallets.find(function(p) {
+                    return p.palletId === palletId || p.id === palletId;
+                });
+            }
+            if (!pallet && window.pallets && window.pallets.length > 0) {
+                pallet = window.pallets.find(function(p) {
+                    return p.palletId === palletId || p.id === palletId;
+                });
+            }
+            
+            // 如果找不到，嘗試從 Firebase 查詢
             if (!pallet) {
-                playBeep('error'); errorFeedback(); result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板</div>';
+                try {
+                    result.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:8px;"><i class="fa-solid fa-spinner fa-spin"></i> 查詢中...</div>';
+                    var docRef = window.doc(window.db, "pallets", palletId);
+                    var docSnap = await window.getDoc(docRef);
+                    if (docSnap.exists()) {
+                        pallet = { id: docSnap.id, ...docSnap.data() };
+                    }
+                } catch(e) { console.log('Firebase查詢失敗:', e); }
+            }
+            
+            if (!pallet) {
+                errorFeedback(); 
+                result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板: ' + palletId + '</div>';
+                document.getElementById('scan-merge-more').value = '';
                 return;
             }
             
