@@ -1585,10 +1585,15 @@
                 }
             }
             
-            // 移板工單
+            // 移板工單 - 改進篩選邏輯
             var orders = window.dispatchOrders || [];
             var moveOrders = orders.filter(function(o) { 
-                return o.status !== 'done' && (o.type === 'move' || o.orderType === 'move');
+                if (o.status === 'done') return false;
+                if (o.type === 'move' || o.orderType === 'move') return true;
+                var ops = o.operations || [];
+                var hasMoveOp = ops.some(function(op) { return op.type === '移位' || op.type === 'move'; });
+                var hasMergeOp = ops.some(function(op) { return op.type === '合併' || op.type === 'merge'; });
+                return hasMoveOp && !hasMergeOp;
             }).length;
             var badgeMove = document.getElementById('badge-move');
             if (badgeMove) {
@@ -1600,9 +1605,12 @@
                 }
             }
             
-            // 併板工單
+            // 併板工單 - 改進篩選邏輯
             var mergeOrders = orders.filter(function(o) { 
-                return o.status !== 'done' && (o.type === 'merge' || o.orderType === 'merge');
+                if (o.status === 'done') return false;
+                if (o.type === 'merge' || o.orderType === 'merge') return true;
+                var ops = o.operations || [];
+                return ops.some(function(op) { return op.type === '合併' || op.type === 'merge'; });
             }).length;
             var badgeMerge = document.getElementById('badge-merge');
             if (badgeMerge) {
@@ -1617,9 +1625,29 @@
         
         // 載入移板工單
         window.loadMoveOrders = function() {
+            console.log('[loadMoveOrders] dispatchOrders:', window.dispatchOrders);
+            
             var orders = (window.dispatchOrders || []).filter(function(o) {
-                return o.status !== 'done' && (o.type === 'move' || o.orderType === 'move');
+                if (o.status === 'done') return false;
+                
+                // 檢查 type 欄位
+                if (o.type === 'move' || o.orderType === 'move') return true;
+                
+                // 檢查 operations 裡面的類型
+                var ops = o.operations || [];
+                var hasMoveOp = ops.some(function(op) {
+                    return op.type === '移位' || op.type === 'move';
+                });
+                
+                // 如果有移位操作且沒有合併操作，視為移板工單
+                var hasMergeOp = ops.some(function(op) {
+                    return op.type === '合併' || op.type === 'merge';
+                });
+                
+                return hasMoveOp && !hasMergeOp;
             });
+            
+            console.log('[loadMoveOrders] 篩選後工單數:', orders.length);
             
             var countEl = document.getElementById('move-orders-count');
             var listEl = document.getElementById('move-orders-list');
@@ -1654,9 +1682,24 @@
         
         // 載入併板工單
         window.loadMergeOrders = function() {
+            console.log('[loadMergeOrders] dispatchOrders:', window.dispatchOrders);
+            
             var orders = (window.dispatchOrders || []).filter(function(o) {
-                return o.status !== 'done' && (o.type === 'merge' || o.orderType === 'merge');
+                if (o.status === 'done') return false;
+                
+                // 檢查 type 欄位
+                if (o.type === 'merge' || o.orderType === 'merge') return true;
+                
+                // 檢查 operations 裡面的類型
+                var ops = o.operations || [];
+                var hasMergeOp = ops.some(function(op) {
+                    return op.type === '合併' || op.type === 'merge';
+                });
+                
+                return hasMergeOp;
             });
+            
+            console.log('[loadMergeOrders] 篩選後工單數:', orders.length);
             
             var countEl = document.getElementById('merge-orders-count');
             var listEl = document.getElementById('merge-orders-list');
