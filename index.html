@@ -1371,12 +1371,19 @@
             return input.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
         }
         
+        // ========== 藍牙掃描槍支援 ==========
+        // 掃描槍模擬鍵盤輸入，特徵：快速連續輸入 + 結尾 Enter
+        window.autoCheckTimer = null;
+        window.lastInputLength = {};
+        window.lastInputTime = {};
+        window.scannerBuffer = {};
+        
         // 自動格式化輸入並檢查是否應該自動觸發確認
         // type: 'location' 或 'pallet'
         // callback: 確認函數
-        window.autoCheckTimer = null;
-        window.lastInputLength = {};
         window.autoFormatAndCheck = function(input, type, callback) {
+            var now = Date.now();
+            var inputId = input.id;
             
             // 清除之前的計時器
             if (window.autoCheckTimer) {
@@ -1394,14 +1401,24 @@
             }
             
             if (!val) {
-                window.lastInputLength[input.id] = 0;
+                window.lastInputLength[inputId] = 0;
+                window.lastInputTime[inputId] = now;
                 return;
             }
             
-            // 檢測是否為掃描器輸入（一次輸入多個字符）
-            var prevLen = window.lastInputLength[input.id] || 0;
-            var isScanner = (val.length - prevLen) > 3;
-            window.lastInputLength[input.id] = val.length;
+            // 計算輸入速度（掃描槍通常 < 50ms 每字符）
+            var prevLen = window.lastInputLength[inputId] || 0;
+            var prevTime = window.lastInputTime[inputId] || now;
+            var timeDiff = now - prevTime;
+            var lenDiff = val.length - prevLen;
+            
+            // 掃描槍偵測條件：
+            // 1. 一次輸入 4+ 字符（批量貼上）
+            // 2. 或輸入速度極快（< 30ms 每字符）
+            var isScanner = (lenDiff > 3) || (lenDiff > 0 && timeDiff < 30 * lenDiff);
+            
+            window.lastInputLength[inputId] = val.length;
+            window.lastInputTime[inputId] = now;
             
             // 根據類型判斷是否達到完整格式
             var shouldTrigger = false;
@@ -1432,15 +1449,31 @@
                 }
             }
             
-            
-            // 掃描器輸入立即觸發，手動輸入延遲 400ms
+            // 掃描器輸入立即觸發（30ms），手動輸入延遲 400ms
             if (shouldTrigger && callback) {
-                var delay = isScanner ? 50 : 400;
+                var delay = isScanner ? 30 : 400;
                 window.autoCheckTimer = setTimeout(function() {
                     callback();
                 }, delay);
             }
         };
+        
+        // 監聽全域鍵盤事件（用於偵測掃描槍）
+        // 掃描槍通常會在輸入完成後發送 Enter 鍵
+        document.addEventListener('keydown', function(e) {
+            // 如果按下 Enter 且當前焦點在掃描輸入框
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                var activeEl = document.activeElement;
+                if (activeEl && activeEl.classList.contains('scan-input')) {
+                    // 檢查是否有待觸發的計時器，如果有就立即執行
+                    if (window.autoCheckTimer) {
+                        clearTimeout(window.autoCheckTimer);
+                        window.autoCheckTimer = null;
+                    }
+                    // Enter 鍵會由 onkeypress 處理
+                }
+            }
+        });
         
         // Toast 提示
         window.showToast = function(msg) {
