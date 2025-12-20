@@ -219,6 +219,19 @@
         }
         .scan-btn:active { background: #2563eb; }
         .scan-hint { color: #64748b; font-size: 13px; }
+        /* 快捷數量按鈕 */
+        .qty-btn {
+            padding: 12px 8px;
+            background: #1e40af;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .qty-btn:active { background: #1d4ed8; transform: scale(0.95); }
+        
         .scan-result {
             margin-top: 12px;
             padding: 10px;
@@ -399,6 +412,25 @@
             color: #94a3b8;
             background: #1e293b;
         }
+    
+        /* 大字體模式 - 適合堆高機手 */
+        .scan-input { font-size: 20px !important; padding: 16px !important; }
+        .menu-card h3 { font-size: 20px !important; }
+        .func-title { font-size: 22px !important; }
+        /* 快捷數量按鈕 */
+        .qty-btn {
+            padding: 12px 8px;
+            background: #1e40af;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .qty-btn:active { background: #1d4ed8; transform: scale(0.95); }
+        
+        .scan-result { font-size: 16px !important; }
     </style>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
@@ -434,38 +466,66 @@
         </header>
         
         <div class="main-menu">
+            <!-- 四大核心功能 -->
+            <div class="menu-card inbound" onclick="openPage('scan-inbound')" style="background:linear-gradient(135deg,#065f46,#047857);">
+                <div class="menu-icon"><i class="fa-solid fa-arrow-down"></i></div>
+                <div class="menu-text">
+                    <h3>入庫</h3>
+                    <p>掃描儲位 → 掃描插單</p>
+                </div>
+                <i class="fa-solid fa-chevron-right menu-arrow"></i>
+            </div>
+            
+            <div class="menu-card outbound" onclick="openPage('scan-outbound')" style="background:linear-gradient(135deg,#9a3412,#ea580c);">
+                <div class="menu-icon"><i class="fa-solid fa-arrow-up"></i></div>
+                <div class="menu-text">
+                    <h3>出庫</h3>
+                    <p>掃描插單 → 輸入數量</p>
+                </div>
+                <i class="fa-solid fa-chevron-right menu-arrow"></i>
+            </div>
+            
+            <div class="menu-card move" onclick="openPage('scan-move')" style="background:linear-gradient(135deg,#1e40af,#3b82f6);">
+                <div class="menu-icon"><i class="fa-solid fa-dolly"></i></div>
+                <div class="menu-text">
+                    <h3>移板</h3>
+                    <p>掃描插單 → 掃描新儲位</p>
+                </div>
+                <i class="fa-solid fa-chevron-right menu-arrow"></i>
+            </div>
+            
+            <div class="menu-card merge" onclick="openPage('scan-merge')" style="background:linear-gradient(135deg,#6b21a8,#a855f7);">
+                <div class="menu-icon"><i class="fa-solid fa-compress"></i></div>
+                <div class="menu-text">
+                    <h3>併板</h3>
+                    <p>掃描少的 → 掃描多的</p>
+                </div>
+                <i class="fa-solid fa-chevron-right menu-arrow"></i>
+            </div>
+            
+            <!-- 分隔線 -->
+            <div style="padding:10px 16px;color:#64748b;font-size:12px;border-top:1px solid #334155;margin-top:8px;">其他功能</div>
+            
             <div class="menu-card picking" onclick="openPage('picking')">
                 <div class="menu-icon">
                     <i class="fa-solid fa-barcode"></i>
                     <span class="menu-badge" id="badge-picking" style="display:none">0</span>
                 </div>
                 <div class="menu-text">
-                    <h3>揀貨掃描</h3>
-                    <p>波次揀貨確認</p>
-                </div>
-                <i class="fa-solid fa-chevron-right menu-arrow"></i>
-            </div>
-            
-            <div class="menu-card inbound" onclick="openPage('inbound')">
-                <div class="menu-icon">
-                    <i class="fa-solid fa-boxes-stacked"></i>
-                    <span class="menu-badge" id="badge-inbound" style="display:none">0</span>
-                </div>
-                <div class="menu-text">
-                    <h3>入庫確認</h3>
-                    <p>掃描板號確認入庫</p>
+                    <h3>波次揀貨</h3>
+                    <p>依波次批量出庫</p>
                 </div>
                 <i class="fa-solid fa-chevron-right menu-arrow"></i>
             </div>
             
             <div class="menu-card dispatch" onclick="openPage('dispatch')">
                 <div class="menu-icon">
-                    <i class="fa-solid fa-truck-moving"></i>
+                    <i class="fa-solid fa-clipboard-list"></i>
                     <span class="menu-badge" id="badge-dispatch" style="display:none">0</span>
                 </div>
                 <div class="menu-text">
-                    <h3>調度執行</h3>
-                    <p>移位/合併作業</p>
+                    <h3>調度工單</h3>
+                    <p>執行調度任務</p>
                 </div>
                 <i class="fa-solid fa-chevron-right menu-arrow"></i>
             </div>
@@ -711,6 +771,258 @@
                 <i class="fa-solid fa-box-open"></i>
                 <p>輸入關鍵字搜尋庫存</p>
             </div>
+        </div>
+    </div>
+
+    
+    <!-- ========== 入庫掃描頁 (新版流程) ========== -->
+    <div id="page-scan-inbound" class="func-page">
+        <header class="func-header" style="background:linear-gradient(135deg,#065f46,#047857);">
+            <button class="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+            <span class="func-title">入庫作業</span>
+        </header>
+        
+        <div class="scan-section">
+            <div style="text-align:center;color:#6ee7b7;font-size:13px;margin-bottom:16px;">
+                掃描儲位 → 掃描插單 → 完成綁定
+            </div>
+            
+            <!-- Step 1: 掃描儲位 -->
+            <div id="scan-in-step1">
+                <div style="background:rgba(16,185,129,0.15);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;">
+                    <div style="color:#10b981;font-size:14px;margin-bottom:4px;">步驟 1</div>
+                    <div style="color:#6ee7b7;font-size:20px;font-weight:bold;">📍 掃描儲位條碼</div>
+                </div>
+                <div class="scan-input-wrap">
+                    <input type="text" id="scan-in-location" class="scan-input" placeholder="掃描儲位 A-01-03" style="text-transform:uppercase;" 
+                           onkeyup="if(event.keyCode===13 || this.value.length>=7) scanInboundStep1();" autofocus>
+                    <button class="camera-btn" onclick="openCameraScanner('scan-in-location')"><i class="fa-solid fa-camera"></i></button>
+                </div>
+            </div>
+            
+            <!-- Step 2: 掃描插單 -->
+            <div id="scan-in-step2" style="display:none;">
+                <div style="background:rgba(16,185,129,0.2);border:1px solid #10b981;border-radius:10px;padding:12px;margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="color:#6ee7b7;">✅ 儲位</span>
+                        <span id="scan-in-loc-display" style="color:#10b981;font-size:20px;font-weight:bold;">-</span>
+                    </div>
+                </div>
+                <div style="background:rgba(59,130,246,0.15);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;">
+                    <div style="color:#3b82f6;font-size:14px;margin-bottom:4px;">步驟 2</div>
+                    <div style="color:#93c5fd;font-size:20px;font-weight:bold;">📦 掃描棧板插單</div>
+                </div>
+                <div class="scan-input-wrap">
+                    <input type="text" id="scan-in-pallet" class="scan-input" placeholder="掃描插單 QR Code"
+                           onkeyup="if(event.keyCode===13 || this.value.length>=10) scanInboundStep2();">
+                    <button class="camera-btn" onclick="openCameraScanner('scan-in-pallet')"><i class="fa-solid fa-camera"></i></button>
+                </div>
+            </div>
+            
+            <div id="scan-in-result" class="scan-result"></div>
+            
+            <button onclick="resetScanInbound()" style="width:100%;padding:16px;background:#dc2626;border:none;border-radius:12px;color:white;margin-top:20px;font-size:16px;font-weight:bold;">
+                <i class="fa-solid fa-rotate-left"></i> 重新掃描
+            </button>
+        </div>
+    </div>
+    
+    <!-- ========== 出庫掃描頁 ========== -->
+    <div id="page-scan-outbound" class="func-page">
+        <header class="func-header" style="background:linear-gradient(135deg,#9a3412,#ea580c);">
+            <button class="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+            <span class="func-title">出庫作業</span>
+        </header>
+        
+        <div class="scan-section">
+            <div style="text-align:center;color:#fdba74;font-size:13px;margin-bottom:16px;">
+                掃描插單 → 輸入數量 → 完成出庫
+            </div>
+            
+            <!-- Step 1: 掃描插單 -->
+            <div id="scan-out-step1">
+                <div style="background:rgba(234,88,12,0.1);border-radius:8px;padding:10px;margin-bottom:12px;text-align:center;">
+                    <span style="color:#ea580c;font-weight:bold;">步驟 1</span> - 掃描棧板插單
+                </div>
+                <div class="scan-input-wrap">
+                    <input type="text" id="scan-out-pallet" class="scan-input" placeholder="掃描插單 QR Code"
+                           onkeyup="if(event.keyCode===13 || this.value.length>=10) scanOutboundStep1();" autofocus>
+                    <button class="camera-btn" onclick="openCameraScanner('scan-out-pallet')"><i class="fa-solid fa-camera"></i></button>
+                </div>
+            </div>
+            
+            <!-- Step 2: 輸入數量 -->
+            <div id="scan-out-step2" style="display:none;">
+                <div style="background:rgba(234,88,12,0.2);border:1px solid #ea580c;border-radius:10px;padding:12px;margin-bottom:12px;">
+                    <div style="text-align:center;">
+                        <div id="scan-out-product" style="color:white;font-size:18px;font-weight:bold;">-</div>
+                        <div id="scan-out-spec" style="color:#94a3b8;font-size:14px;">-</div>
+                        <div style="margin-top:8px;">
+                            <span style="color:#fdba74;">庫存：</span>
+                            <span id="scan-out-stock" style="color:#fbbf24;font-size:24px;font-weight:bold;">0</span>
+                            <span style="color:#fdba74;"> 件</span>
+                        </div>
+                        <div style="color:#64748b;font-size:12px;margin-top:4px;">儲位：<span id="scan-out-loc">-</span></div>
+                    </div>
+                </div>
+                <div style="background:rgba(239,68,68,0.1);border-radius:8px;padding:10px;margin-bottom:12px;text-align:center;">
+                    <span style="color:#ef4444;font-weight:bold;">步驟 2</span> - 選擇或輸入出庫數量
+                </div>
+                <!-- 快速數量按鈕 -->
+                <div id="scan-out-quick-btns" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
+                </div>
+                <div style="display:flex;gap:10px;margin-bottom:12px;">
+                    <input type="number" id="scan-out-qty" class="scan-input" style="flex:1;text-align:center;font-size:28px;font-weight:bold;" placeholder="0"
+                           onkeyup="if(event.keyCode===13) executeScanOutbound();">
+                    <button onclick="scanOutboundAll()" style="padding:14px 20px;background:#ef4444;border:none;border-radius:10px;color:white;font-weight:bold;font-size:16px;">全出</button>
+                </div>
+                <button onclick="executeScanOutbound()" style="width:100%;padding:16px;background:#ea580c;border:none;border-radius:10px;color:white;font-size:18px;font-weight:bold;">
+                    <i class="fa-solid fa-check"></i> 確認出庫
+                </button>
+            </div>
+            
+            <div id="scan-out-result" class="scan-result"></div>
+            
+            <button onclick="resetScanOutbound()" style="width:100%;padding:16px;background:#dc2626;border:none;border-radius:12px;color:white;margin-top:20px;font-size:16px;font-weight:bold;">
+                <i class="fa-solid fa-rotate-left"></i> 重新掃描
+            </button>
+        </div>
+    </div>
+    
+    <!-- ========== 移板掃描頁 ========== -->
+    <div id="page-scan-move" class="func-page">
+        <header class="func-header" style="background:linear-gradient(135deg,#1e40af,#3b82f6);">
+            <button class="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+            <span class="func-title">移板作業</span>
+        </header>
+        
+        <div class="scan-section">
+            <div style="text-align:center;color:#93c5fd;font-size:13px;margin-bottom:16px;">
+                掃描插單 → 掃描新儲位 → 完成換綁
+            </div>
+            
+            <!-- Step 1: 掃描插單 -->
+            <div id="scan-move-step1">
+                <div style="background:rgba(59,130,246,0.1);border-radius:8px;padding:10px;margin-bottom:12px;text-align:center;">
+                    <span style="color:#3b82f6;font-weight:bold;">步驟 1</span> - 掃描棧板插單
+                </div>
+                <div class="scan-input-wrap">
+                    <input type="text" id="scan-move-pallet" class="scan-input" placeholder="掃描插單 QR Code"
+                           onkeyup="if(event.keyCode===13 || this.value.length>=10) scanMoveStep1();" autofocus>
+                    <button class="camera-btn" onclick="openCameraScanner('scan-move-pallet')"><i class="fa-solid fa-camera"></i></button>
+                </div>
+            </div>
+            
+            <!-- Step 2: 掃描新儲位 -->
+            <div id="scan-move-step2" style="display:none;">
+                <div style="background:rgba(59,130,246,0.2);border:1px solid #3b82f6;border-radius:10px;padding:12px;margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span style="color:#93c5fd;">品名</span>
+                        <span id="scan-move-product" style="color:white;font-weight:bold;">-</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;">
+                        <span style="color:#93c5fd;">目前儲位</span>
+                        <span id="scan-move-old-loc" style="color:#fbbf24;font-weight:bold;font-size:18px;">-</span>
+                    </div>
+                </div>
+                <div style="background:rgba(16,185,129,0.1);border-radius:8px;padding:10px;margin-bottom:12px;text-align:center;">
+                    <span style="color:#10b981;font-weight:bold;">步驟 2</span> - 掃描新儲位條碼
+                </div>
+                <div class="scan-input-wrap">
+                    <input type="text" id="scan-move-new-loc" class="scan-input" placeholder="掃描新儲位" style="text-transform:uppercase;"
+                           onkeyup="if(event.keyCode===13 || this.value.length>=7) scanMoveStep2();">
+                    <button class="camera-btn" onclick="openCameraScanner('scan-move-new-loc')"><i class="fa-solid fa-camera"></i></button>
+                </div>
+            </div>
+            
+            <div id="scan-move-result" class="scan-result"></div>
+            
+            <button onclick="resetScanMove()" style="width:100%;padding:16px;background:#dc2626;border:none;border-radius:12px;color:white;margin-top:20px;font-size:16px;font-weight:bold;">
+                <i class="fa-solid fa-rotate-left"></i> 重新掃描
+            </button>
+        </div>
+    </div>
+    
+    <!-- ========== 併板掃描頁 ========== -->
+    <div id="page-scan-merge" class="func-page">
+        <header class="func-header" style="background:linear-gradient(135deg,#6b21a8,#a855f7);">
+            <button class="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+            <span class="func-title">併板作業</span>
+        </header>
+        
+        <div class="scan-section">
+            <div style="text-align:center;color:#d8b4fe;font-size:13px;margin-bottom:16px;">
+                掃描少的 → 掃描多的 → 自動合併
+            </div>
+            
+            <!-- Step 1: 掃描數量少的 -->
+            <div id="scan-merge-step1">
+                <div style="background:rgba(249,115,22,0.1);border-radius:8px;padding:10px;margin-bottom:12px;text-align:center;">
+                    <span style="color:#f97316;font-weight:bold;">步驟 1</span> - 掃描數量【少】的插單
+                </div>
+                <div class="scan-input-wrap">
+                    <input type="text" id="scan-merge-less" class="scan-input" placeholder="掃描插單（數量少的）"
+                           onkeyup="if(event.keyCode===13 || this.value.length>=10) scanMergeStep1();" autofocus>
+                    <button class="camera-btn" onclick="openCameraScanner('scan-merge-less')"><i class="fa-solid fa-camera"></i></button>
+                </div>
+            </div>
+            
+            <!-- 少的板資訊 -->
+            <div id="scan-merge-less-info" style="display:none;background:rgba(249,115,22,0.2);border:1px solid #f97316;border-radius:10px;padding:12px;margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div id="scan-merge-less-name" style="color:white;font-weight:bold;">-</div>
+                        <div style="color:#fdba74;font-size:12px;">將被清空刪除</div>
+                    </div>
+                    <div style="color:#f97316;font-size:24px;font-weight:bold;"><span id="scan-merge-less-qty">0</span> 件</div>
+                </div>
+            </div>
+            
+            <!-- 加號 -->
+            <div id="scan-merge-plus" style="display:none;text-align:center;font-size:24px;color:#a855f7;padding:8px;">＋</div>
+            
+            <!-- Step 2: 掃描數量多的 -->
+            <div id="scan-merge-step2" style="display:none;">
+                <div style="background:rgba(168,85,247,0.1);border-radius:8px;padding:10px;margin-bottom:12px;text-align:center;">
+                    <span style="color:#a855f7;font-weight:bold;">步驟 2</span> - 掃描數量【多】的插單
+                </div>
+                <div class="scan-input-wrap">
+                    <input type="text" id="scan-merge-more" class="scan-input" placeholder="掃描插單（數量多的）"
+                           onkeyup="if(event.keyCode===13 || this.value.length>=10) scanMergeStep2();">
+                    <button class="camera-btn" onclick="openCameraScanner('scan-merge-more')"><i class="fa-solid fa-camera"></i></button>
+                </div>
+            </div>
+            
+            <!-- 多的板資訊 -->
+            <div id="scan-merge-more-info" style="display:none;background:rgba(168,85,247,0.2);border:1px solid #a855f7;border-radius:10px;padding:12px;margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div id="scan-merge-more-name" style="color:white;font-weight:bold;">-</div>
+                        <div style="color:#d8b4fe;font-size:12px;">數量會增加</div>
+                    </div>
+                    <div style="color:#a855f7;font-size:24px;font-weight:bold;"><span id="scan-merge-more-qty">0</span> 件</div>
+                </div>
+            </div>
+            
+            <!-- 合併預覽 -->
+            <div id="scan-merge-preview" style="display:none;background:rgba(16,185,129,0.2);border:2px solid #10b981;border-radius:10px;padding:16px;margin-bottom:12px;text-align:center;">
+                <div style="color:#6ee7b7;font-size:14px;margin-bottom:8px;">合併後總數</div>
+                <div style="color:#10b981;font-size:36px;font-weight:bold;"><span id="scan-merge-total">0</span> 件</div>
+                <div style="color:#64748b;font-size:12px;margin-top:4px;">
+                    <span id="scan-merge-calc">0 + 0 = 0</span>
+                </div>
+            </div>
+            
+            <!-- 確認按鈕 -->
+            <button id="btn-scan-merge-confirm" onclick="executeScanMerge()" style="display:none;width:100%;padding:16px;background:#a855f7;border:none;border-radius:10px;color:white;font-size:18px;font-weight:bold;">
+                <i class="fa-solid fa-check"></i> 確認併板
+            </button>
+            
+            <div id="scan-merge-result" class="scan-result"></div>
+            
+            <button onclick="resetScanMerge()" style="width:100%;padding:16px;background:#dc2626;border:none;border-radius:12px;color:white;margin-top:20px;font-size:16px;font-weight:bold;">
+                <i class="fa-solid fa-rotate-left"></i> 重新掃描
+            </button>
         </div>
     </div>
 
@@ -1784,6 +2096,679 @@
                 if (active.id === 'query-input') doInventoryQuery();
             }
         });
+    
+
+        // ========== 回饋工具 ==========
+        // 震動回饋
+        window.vibrate = function(pattern) {
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern || 100);
+            }
+        };
+        
+        // 成功震動（短）
+        window.vibrateSuccess = function() { vibrate(100); };
+        
+        // 錯誤震動（長-短-長）
+        window.vibrateError = function() { vibrate([200, 100, 200]); };
+        
+        // 音效播放
+        window.playBeep = function(type) {
+            try {
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                if (type === 'success') {
+                    osc.frequency.value = 880; // 高音
+                    gain.gain.value = 0.3;
+                    osc.start();
+                    setTimeout(function() { osc.stop(); ctx.close(); }, 150);
+                } else if (type === 'error') {
+                    osc.frequency.value = 220; // 低音
+                    gain.gain.value = 0.3;
+                    osc.start();
+                    setTimeout(function() { osc.stop(); ctx.close(); }, 300);
+                } else {
+                    osc.frequency.value = 660; // 中音（普通嗶）
+                    gain.gain.value = 0.2;
+                    osc.start();
+                    setTimeout(function() { osc.stop(); ctx.close(); }, 100);
+                }
+            } catch (e) { console.log('Audio not supported'); }
+        };
+        
+        // 成功回饋（震動+音效）
+        window.feedbackSuccess = function() {
+            vibrateSuccess();
+            playBeep('success');
+        };
+        
+        // 錯誤回饋
+        window.feedbackError = function() {
+            vibrateError();
+            playBeep('error');
+        };
+        
+
+        // ========== 操作回饋系統 ==========
+        // 震動回饋
+        window.vibrate = function(pattern) {
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern || 50);
+            }
+        };
+        
+        // 成功音效 (使用 Web Audio API)
+        window.playBeep = function(type) {
+            try {
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                if (type === 'success') {
+                    osc.frequency.value = 880; // 高音
+                    gain.gain.value = 0.3;
+                    osc.start();
+                    setTimeout(function() { osc.frequency.value = 1100; }, 100);
+                    setTimeout(function() { osc.stop(); ctx.close(); }, 200);
+                    vibrate([50, 30, 50]); // 短-停-短
+                } else if (type === 'error') {
+                    osc.frequency.value = 220; // 低音
+                    gain.gain.value = 0.3;
+                    osc.start();
+                    setTimeout(function() { osc.stop(); ctx.close(); }, 300);
+                    vibrate([200, 100, 200]); // 長震動
+                } else {
+                    // 一般掃描音
+                    osc.frequency.value = 660;
+                    gain.gain.value = 0.2;
+                    osc.start();
+                    setTimeout(function() { osc.stop(); ctx.close(); }, 80);
+                    vibrate(30);
+                }
+            } catch(e) { console.log('Audio not supported'); }
+        };
+        
+        // 自動聚焦並選取
+        window.focusAndSelect = function(id) {
+            setTimeout(function() {
+                var el = document.getElementById(id);
+                if (el) {
+                    el.focus();
+                    el.select();
+                }
+            }, 100);
+        };
+
+
+
+        // ========== 觸覺與音效反饋 ==========
+        window.vibrate = function(pattern) {
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern || 50);
+            }
+        };
+        
+        window.playBeep = function(success) {
+            try {
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = success ? 800 : 300;
+                osc.type = 'sine';
+                gain.gain.value = 0.3;
+                osc.start();
+                osc.stop(ctx.currentTime + (success ? 0.1 : 0.3));
+            } catch(e) {}
+        };
+        
+        window.successFeedback = function() {
+            vibrate(50);
+            playBeep(true);
+        };
+        
+        window.errorFeedback = function() {
+            vibrate([100, 50, 100]);
+            playBeep(false);
+        };
+
+        // ========== 自動掃描觸發（無需按確認鍵）==========
+        // 條碼槍通常會在掃描後自動送出 Enter 鍵
+        // 或者當輸入長度達到一定值時自動觸發
+        
+        var scanTimeout = null;
+        var MIN_SCAN_LENGTH = 3;  // 最小有效掃描長度
+        
+        function autoTrigger(inputId, callback, delay) {
+            delay = delay || 300;
+            var input = document.getElementById(inputId);
+            if (!input) return;
+            var val = input.value.trim();
+            if (val.length < MIN_SCAN_LENGTH) return;
+            
+            clearTimeout(scanTimeout);
+            scanTimeout = setTimeout(function() {
+                callback();
+            }, delay);
+        }
+        
+        // ----- 入庫自動觸發 -----
+        window.autoScanInLoc = function(e) {
+            // Enter 鍵直接觸發
+            if (e.keyCode === 13) { scanInboundStep1(); return; }
+            // 或者延遲自動觸發
+            autoTrigger('scan-in-location', scanInboundStep1, 500);
+        };
+        
+        window.autoScanInPallet = function(e) {
+            if (e.keyCode === 13) { scanInboundStep2(); return; }
+            autoTrigger('scan-in-pallet', scanInboundStep2, 500);
+        };
+        
+        // ----- 出庫自動觸發 -----
+        window.autoScanOutPallet = function(e) {
+            if (e.keyCode === 13) { scanOutboundStep1(); return; }
+            autoTrigger('scan-out-pallet', scanOutboundStep1, 500);
+        };
+        
+        // ----- 移板自動觸發 -----
+        window.autoScanMovePallet = function(e) {
+            if (e.keyCode === 13) { scanMoveStep1(); return; }
+            autoTrigger('scan-move-pallet', scanMoveStep1, 500);
+        };
+        
+        window.autoScanMoveNewLoc = function(e) {
+            if (e.keyCode === 13) { scanMoveStep2(); return; }
+            autoTrigger('scan-move-new-loc', scanMoveStep2, 500);
+        };
+        
+        // ----- 併板自動觸發 -----
+        window.autoScanMergeLess = function(e) {
+            if (e.keyCode === 13) { scanMergeStep1(); return; }
+            autoTrigger('scan-merge-less', scanMergeStep1, 500);
+        };
+        
+        window.autoScanMergeMore = function(e) {
+            if (e.keyCode === 13) { scanMergeStep2(); return; }
+            autoTrigger('scan-merge-more', scanMergeStep2, 500);
+        };
+        
+        // ========== 相機掃描完成後自動觸發 ==========
+        var originalOnScanSuccess = window.onScanSuccess;
+        window.onScanSuccess = function(decodedText) {
+            if (originalOnScanSuccess) originalOnScanSuccess(decodedText);
+            
+            // 根據當前焦點的輸入框自動觸發對應函數
+            setTimeout(function() {
+                var activeId = document.activeElement ? document.activeElement.id : '';
+                if (activeId === 'scan-in-location') scanInboundStep1();
+                else if (activeId === 'scan-in-pallet') scanInboundStep2();
+                else if (activeId === 'scan-out-pallet') scanOutboundStep1();
+                else if (activeId === 'scan-move-pallet') scanMoveStep1();
+                else if (activeId === 'scan-move-new-loc') scanMoveStep2();
+                else if (activeId === 'scan-merge-less') scanMergeStep1();
+                else if (activeId === 'scan-merge-more') scanMergeStep2();
+            }, 100);
+        };
+
+        // ========== 新版掃描作業流程 ==========
+        var scanData = {
+            inbound: { location: null },
+            outbound: { pallet: null, stock: 0 },
+            move: { pallet: null, oldLoc: null },
+            merge: { less: null, more: null }
+        };
+
+        // 操作反饋 - 震動和音效
+        window.vibrateSuccess = function() {
+            if (navigator.vibrate) navigator.vibrate(100);
+        };
+        
+        window.vibrateError = function() {
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        };
+        
+        window.playBeep = function() {
+            try {
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 1000;
+                gain.gain.value = 0.3;
+                osc.start();
+                setTimeout(function() { osc.stop(); ctx.close(); }, 100);
+            } catch(e) {}
+        };
+
+        
+        // ----- 入庫作業 -----
+        window.scanInboundStep1 = function() {
+            var loc = document.getElementById('scan-in-location').value.trim().toUpperCase();
+            if (!loc || loc.length < 5) return; // 長度不足不觸發
+            
+            scanData.inbound.location = loc;
+            document.getElementById('scan-in-loc-display').innerText = loc;
+            document.getElementById('scan-in-step1').style.display = 'none';
+            document.getElementById('scan-in-step2').style.display = 'block';
+            
+            feedbackSuccess(); // 震動+音效
+            setTimeout(function() { document.getElementById('scan-in-pallet').focus(); }, 100);
+        };
+        
+        window.scanInboundStep2 = async function() {
+            var palletId = document.getElementById('scan-in-pallet').value.trim().toUpperCase();
+            if (!palletId) { showToast('請掃描插單'); return; }
+            
+            var loc = scanData.inbound.location;
+            var result = document.getElementById('scan-in-result');
+            
+            // 查找棧板
+            var pallet = window.allPallets.find(function(p) {
+                return p.palletId === palletId || p.id === palletId;
+            });
+            
+            if (!pallet) {
+                feedbackError();
+                playBeep('error'); errorFeedback(); result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板</div>';
+                document.getElementById('scan-in-pallet').value = '';
+                document.getElementById('scan-in-pallet').focus();
+                return;
+            }
+            
+            try {
+                await window.updateDoc(window.doc(window.db, "pallets", pallet.id), { locationId: loc });
+                
+                // 記錄異動
+                await window.addDoc(window.collection(window.db, 'inventoryLogs'), {
+                    type: 'inbound', productName: pallet.productName, spec: pallet.spec || '',
+                    quantity: pallet.quantity, quantityChange: pallet.quantity, locationId: loc,
+                    batchNo: pallet.batchNo || '', palletId: palletId, note: '手機版掃描入庫',
+                    operator: window.currentUser || 'mobile', timestamp: new Date()
+                });
+                
+                result.innerHTML = '<div style="background:#065f46;border-radius:10px;padding:16px;text-align:center;">' +
+                    '<div style="font-size:32px;margin-bottom:8px;">✅</div>' +
+                    '<div style="color:white;font-size:18px;font-weight:bold;">' + pallet.productName + '</div>' +
+                    '<div style="color:#6ee7b7;">' + pallet.quantity + ' 件</div>' +
+                    '<div style="color:#10b981;font-weight:bold;margin-top:8px;">已綁定至 ' + loc + '</div></div>';
+                
+                vibrateSuccess(); playBeep(); feedbackSuccess();
+                successFeedback(); showToast('✅ 入庫成功！');
+                
+                // 2秒後自動重置，準備下一筆
+                setTimeout(function() { resetScanInbound(); }, 2000);
+            } catch (err) {
+                result.innerHTML = '<div style="color:#f87171;">❌ 入庫失敗: ' + err.message + '</div>';
+            }
+        };
+        
+        window.resetScanInbound = function() {
+            scanData.inbound = { location: null };
+            document.getElementById('scan-in-location').value = '';
+            document.getElementById('scan-in-pallet').value = '';
+            document.getElementById('scan-in-step1').style.display = 'block';
+            document.getElementById('scan-in-step2').style.display = 'none';
+            document.getElementById('scan-in-result').innerHTML = '';
+            setTimeout(function() { document.getElementById('scan-in-location').focus(); }, 100);
+        };
+        
+        // ----- 出庫作業 -----
+        window.scanOutboundStep1 = function() {
+            var palletId = document.getElementById('scan-out-pallet').value.trim().toUpperCase();
+            if (!palletId) { showToast('請掃描插單'); return; }
+            
+            var pallet = window.allPallets.find(function(p) {
+                return p.palletId === palletId || p.id === palletId;
+            });
+            
+            var result = document.getElementById('scan-out-result');
+            if (!pallet) {
+                playBeep('error'); errorFeedback(); result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板</div>';
+                return;
+            }
+            
+            scanData.outbound.pallet = pallet;
+            scanData.outbound.stock = pallet.quantity;
+            
+            document.getElementById('scan-out-product').innerText = pallet.productName;
+            document.getElementById('scan-out-spec').innerText = pallet.spec || '-';
+            document.getElementById('scan-out-stock').innerText = pallet.quantity;
+            document.getElementById('scan-out-loc').innerText = pallet.locationId;
+            
+            // 生成快速數量按鈕
+            var quickBtns = document.getElementById('scan-out-quick-btns');
+            var stock = pallet.quantity;
+            var btnHtml = '';
+            
+            // 常用數量按鈕
+            var quickNums = [];
+            if (stock >= 1) quickNums.push(1);
+            if (stock >= 5) quickNums.push(5);
+            if (stock >= 10) quickNums.push(10);
+            if (stock >= 20) quickNums.push(20);
+            if (stock >= 50 && stock > 20) quickNums.push(50);
+            // 添加半數和全數
+            var half = Math.floor(stock / 2);
+            if (half > 0 && quickNums.indexOf(half) === -1) quickNums.push(half);
+            
+            // 排序並生成按鈕
+            quickNums.sort(function(a,b){ return a-b; });
+            quickNums.forEach(function(num) {
+                btnHtml += '<button onclick="setOutQty(' + num + ')" style="padding:12px;background:#334155;border:1px solid #475569;border-radius:8px;color:white;font-weight:bold;font-size:16px;">' + num + '</button>';
+            });
+            quickBtns.innerHTML = btnHtml;
+            
+            document.getElementById('scan-out-step1').style.display = 'none';
+            document.getElementById('scan-out-step2').style.display = 'block';
+            feedbackSuccess();
+            setTimeout(function() { document.getElementById('scan-out-qty').focus(); }, 100);
+            result.innerHTML = '';
+        };
+        
+        window.setOutQty = function(qty) {
+            document.getElementById('scan-out-qty').value = qty;
+            // 自動聚焦到確認按鈕，方便直接按 Enter
+            document.getElementById('scan-out-qty').focus();
+        };
+        
+
+        // 出庫數量快捷設定
+        window.setOutQty = function(qty) {
+            document.getElementById('scan-out-qty').value = qty;
+            playBeep();
+        };
+        
+        window.addOutQty = function(delta) {
+            var input = document.getElementById('scan-out-qty');
+            var current = parseInt(input.value) || 0;
+            var newVal = Math.max(0, current + delta);
+            var max = scanData.outbound.stock;
+            input.value = Math.min(newVal, max);
+            playBeep();
+        };
+        
+        
+        // 出庫數量快捷按鈕
+        window.addOutQty = function(n) {
+            var el = document.getElementById('scan-out-qty');
+            var current = parseInt(el.value) || 0;
+            var max = scanData.outbound.stock;
+            el.value = Math.min(current + n, max);
+            playBeep();
+        };
+
+        window.scanOutboundAll = function() {
+            document.getElementById('scan-out-qty').value = scanData.outbound.stock;
+        };
+        
+        window.setOutQty = function(qty) {
+            var stock = scanData.outbound.stock;
+            var current = parseInt(document.getElementById('scan-out-qty').value) || 0;
+            var newQty = current + qty;
+            if (newQty > stock) newQty = stock;
+            document.getElementById('scan-out-qty').value = newQty;
+        };
+        
+        window.executeScanOutbound = async function() {
+            var pallet = scanData.outbound.pallet;
+            if (!pallet) { showToast('請先掃描棧板'); return; }
+            
+            var qty = parseInt(document.getElementById('scan-out-qty').value) || 0;
+            if (qty <= 0) { showToast('請輸入出庫數量'); return; }
+            if (qty > pallet.quantity) { showToast('數量不能超過庫存 ' + pallet.quantity); return; }
+            
+            var newQty = pallet.quantity - qty;
+            var result = document.getElementById('scan-out-result');
+            
+            try {
+                if (newQty === 0) {
+                    await window.deleteDoc(window.doc(window.db, "pallets", pallet.id));
+                } else {
+                    await window.updateDoc(window.doc(window.db, "pallets", pallet.id), { quantity: newQty });
+                }
+                
+                await window.addDoc(window.collection(window.db, 'inventoryLogs'), {
+                    type: 'outbound', productName: pallet.productName, spec: pallet.spec || '',
+                    quantity: qty, quantityChange: -qty, locationId: pallet.locationId,
+                    batchNo: pallet.batchNo || '', palletId: pallet.palletId, note: '手機版掃描出庫',
+                    operator: window.currentUser || 'mobile', timestamp: new Date()
+                });
+                
+                result.innerHTML = '<div style="background:#9a3412;border-radius:10px;padding:16px;text-align:center;">' +
+                    '<div style="font-size:32px;margin-bottom:8px;">✅</div>' +
+                    '<div style="color:white;font-size:18px;font-weight:bold;">' + pallet.productName + '</div>' +
+                    '<div style="color:#fdba74;">出庫：' + qty + ' 件</div>' +
+                    (newQty > 0 ? '<div style="color:#fbbf24;">剩餘：' + newQty + ' 件</div>' : '<div style="color:#f87171;">已清空</div>') + '</div>';
+                
+                vibrateSuccess(); playBeep(); feedbackSuccess();
+                playBeep('success');
+                setTimeout(resetScanOutbound, 1500);
+            } catch (err) {
+                result.innerHTML = '<div style="color:#f87171;">❌ 出庫失敗: ' + err.message + '</div>';
+            }
+        };
+        
+        window.resetScanOutbound = function() {
+            scanData.outbound = { pallet: null, stock: 0 };
+            document.getElementById('scan-out-pallet').value = '';
+            document.getElementById('scan-out-qty').value = '';
+            document.getElementById('scan-out-step1').style.display = 'block';
+            document.getElementById('scan-out-step2').style.display = 'none';
+            document.getElementById('scan-out-result').innerHTML = '';
+            setTimeout(function() { document.getElementById('scan-out-pallet').focus(); }, 100);
+        };
+        
+        // ----- 移板作業 -----
+        window.scanMoveStep1 = function() {
+            var palletId = document.getElementById('scan-move-pallet').value.trim().toUpperCase();
+            if (!palletId) { showToast('請掃描插單'); return; }
+            
+            var pallet = window.allPallets.find(function(p) {
+                return p.palletId === palletId || p.id === palletId;
+            });
+            
+            var result = document.getElementById('scan-move-result');
+            if (!pallet) {
+                playBeep('error'); errorFeedback(); result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板</div>';
+                return;
+            }
+            
+            scanData.move.pallet = pallet;
+            scanData.move.oldLoc = pallet.locationId;
+            
+            document.getElementById('scan-move-product').innerText = pallet.productName + ' | ' + pallet.quantity + '件';
+            document.getElementById('scan-move-old-loc').innerText = pallet.locationId;
+            
+            document.getElementById('scan-move-step1').style.display = 'none';
+            document.getElementById('scan-move-step2').style.display = 'block';
+            feedbackSuccess();
+            setTimeout(function() { document.getElementById('scan-move-new-loc').focus(); }, 100);
+            result.innerHTML = '';
+        };
+        
+        window.scanMoveStep2 = async function() {
+            var newLoc = document.getElementById('scan-move-new-loc').value.trim().toUpperCase();
+            if (!newLoc) { showToast('請掃描新儲位'); return; }
+            
+            var pallet = scanData.move.pallet;
+            var oldLoc = scanData.move.oldLoc;
+            var result = document.getElementById('scan-move-result');
+            
+            try {
+                await window.updateDoc(window.doc(window.db, "pallets", pallet.id), { locationId: newLoc });
+                
+                await window.addDoc(window.collection(window.db, 'inventoryLogs'), {
+                    type: 'move', productName: pallet.productName, spec: pallet.spec || '',
+                    quantity: pallet.quantity, quantityChange: 0, locationId: newLoc, fromLocation: oldLoc,
+                    releasedLocation: oldLoc,  // 被釋放的原儲位
+                    batchNo: pallet.batchNo || '', palletId: pallet.palletId, 
+                    note: '手機版掃描移板: ' + oldLoc + '→' + newLoc + ', 儲位 ' + oldLoc + ' 已釋放',
+                    operator: window.currentUser || 'mobile', timestamp: new Date()
+                });
+                
+                result.innerHTML = '<div style="background:#1e40af;border-radius:10px;padding:16px;text-align:center;">' +
+                    '<div style="font-size:32px;margin-bottom:8px;">✅</div>' +
+                    '<div style="color:white;font-size:16px;font-weight:bold;">' + pallet.productName + '</div>' +
+                    '<div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:8px;">' +
+                    '<span style="color:#94a3b8;text-decoration:line-through;">' + oldLoc + '</span>' +
+                    '<span style="color:#3b82f6;">→</span>' +
+                    '<span style="color:#60a5fa;font-size:18px;font-weight:bold;">' + newLoc + '</span></div>' +
+                    '<div style="color:#a3e635;font-size:12px;margin-top:8px;">📍 儲位 ' + oldLoc + ' 已釋放</div></div>';
+                
+                vibrateSuccess(); playBeep(); feedbackSuccess();
+                successFeedback(); showToast('✅ 移板成功！');
+                setTimeout(resetScanMove, 2000);
+            } catch (err) {
+                result.innerHTML = '<div style="color:#f87171;">❌ 移板失敗: ' + err.message + '</div>';
+            }
+        };
+        
+        window.resetScanMove = function() {
+            scanData.move = { pallet: null, oldLoc: null };
+            document.getElementById('scan-move-pallet').value = '';
+            document.getElementById('scan-move-new-loc').value = '';
+            document.getElementById('scan-move-step1').style.display = 'block';
+            document.getElementById('scan-move-step2').style.display = 'none';
+            document.getElementById('scan-move-result').innerHTML = '';
+            setTimeout(function() { document.getElementById('scan-move-pallet').focus(); }, 100);
+        };
+        
+        // ----- 併板作業 -----
+        window.scanMergeStep1 = function() {
+            var palletId = document.getElementById('scan-merge-less').value.trim().toUpperCase();
+            if (!palletId) { showToast('請掃描插單'); return; }
+            
+            var pallet = window.allPallets.find(function(p) {
+                return p.palletId === palletId || p.id === palletId;
+            });
+            
+            var result = document.getElementById('scan-merge-result');
+            if (!pallet) {
+                playBeep('error'); errorFeedback(); result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板</div>';
+                return;
+            }
+            
+            scanData.merge.less = pallet;
+            
+            document.getElementById('scan-merge-less-name').innerText = pallet.productName;
+            document.getElementById('scan-merge-less-qty').innerText = pallet.quantity;
+            
+            document.getElementById('scan-merge-step1').style.display = 'none';
+            document.getElementById('scan-merge-less-info').style.display = 'block';
+            document.getElementById('scan-merge-plus').style.display = 'block';
+            document.getElementById('scan-merge-step2').style.display = 'block';
+            feedbackSuccess();
+            setTimeout(function() { document.getElementById('scan-merge-more').focus(); }, 100);
+            result.innerHTML = '';
+        };
+        
+        window.scanMergeStep2 = function() {
+            var palletId = document.getElementById('scan-merge-more').value.trim().toUpperCase();
+            if (!palletId) { showToast('請掃描插單'); return; }
+            
+            var pallet = window.allPallets.find(function(p) {
+                return p.palletId === palletId || p.id === palletId;
+            });
+            
+            var result = document.getElementById('scan-merge-result');
+            if (!pallet) {
+                playBeep('error'); errorFeedback(); result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 找不到此棧板</div>';
+                return;
+            }
+            
+            var less = scanData.merge.less;
+            if (less.productName !== pallet.productName) {
+                result.innerHTML = '<div style="color:#f87171;text-align:center;padding:12px;"><i class="fa-solid fa-times-circle"></i> 品名不同，無法合併<br><span style="font-size:12px;">少的: ' + less.productName + '<br>多的: ' + pallet.productName + '</span></div>';
+                document.getElementById('scan-merge-more').value = '';
+                return;
+            }
+            
+            scanData.merge.more = pallet;
+            var total = less.quantity + pallet.quantity;
+            
+            document.getElementById('scan-merge-more-name').innerText = pallet.productName;
+            document.getElementById('scan-merge-more-qty').innerText = pallet.quantity;
+            document.getElementById('scan-merge-total').innerText = total;
+            document.getElementById('scan-merge-calc').innerText = less.quantity + ' + ' + pallet.quantity + ' = ' + total;
+            
+            document.getElementById('scan-merge-step2').style.display = 'none';
+            document.getElementById('scan-merge-more-info').style.display = 'block';
+            document.getElementById('scan-merge-preview').style.display = 'block';
+            // btn removed - auto execute
+            feedbackSuccess();
+            result.innerHTML = '';
+            
+            // 自動執行合併（3秒後，給用戶確認時間）
+            result.innerHTML = '<div style="color:#a855f7;text-align:center;padding:8px;font-size:14px;"><i class="fa-solid fa-spinner fa-spin"></i> 3 秒後自動合併，按重置取消...</div>';
+            window.mergeCountdown = setTimeout(function() {
+                executeScanMerge();
+            }, 3000);
+        };
+        
+        window.executeScanMerge = async function() {
+            var less = scanData.merge.less;
+            var more = scanData.merge.more;
+            if (!less || !more) return;
+            
+            var total = less.quantity + more.quantity;
+            var result = document.getElementById('scan-merge-result');
+            
+            try {
+                var batch = window.writeBatch(window.db);
+                batch.update(window.doc(window.db, "pallets", more.id), { quantity: total });
+                batch.delete(window.doc(window.db, "pallets", less.id));
+                await batch.commit();
+                
+                await window.addDoc(window.collection(window.db, 'inventoryLogs'), {
+                    type: 'merge', productName: more.productName, spec: more.spec || '',
+                    quantity: total, quantityChange: 0, locationId: more.locationId,
+                    fromLocation: less.locationId,  // 原儲位（已釋放）
+                    batchNo: more.batchNo || '', palletId: more.palletId,
+                    deletedPalletId: less.palletId,  // 被刪除的板號
+                    deletedLocation: less.locationId,  // 被釋放的儲位
+                    note: '手機版掃描併板: ' + less.palletId + '(' + less.locationId + ')→' + more.palletId + '(' + more.locationId + '), 儲位 ' + less.locationId + ' 已釋放',
+                    operator: window.currentUser || 'mobile', timestamp: new Date()
+                });
+                
+                result.innerHTML = '<div style="background:#6b21a8;border-radius:10px;padding:16px;text-align:center;">' +
+                    '<div style="font-size:32px;margin-bottom:8px;">✅</div>' +
+                    '<div style="color:white;font-size:18px;font-weight:bold;">' + more.productName + '</div>' +
+                    '<div style="color:#d8b4fe;">合併後：' + total + ' 件</div>' +
+                    '<div style="color:#a3e635;font-size:12px;margin-top:8px;">📍 儲位 ' + less.locationId + ' 已釋放</div></div>';
+                
+                vibrateSuccess(); playBeep(); feedbackSuccess();
+                successFeedback(); showToast('✅ 併板成功！');
+                setTimeout(resetScanMerge, 2500);
+            } catch (err) {
+                result.innerHTML = '<div style="color:#f87171;">❌ 併板失敗: ' + err.message + '</div>';
+            }
+        };
+        
+        window.resetScanMerge = function() {
+            if (window.mergeCountdown) clearTimeout(window.mergeCountdown);
+            scanData.merge = { less: null, more: null };
+            document.getElementById('scan-merge-less').value = '';
+            document.getElementById('scan-merge-more').value = '';
+            document.getElementById('scan-merge-step1').style.display = 'block';
+            document.getElementById('scan-merge-less-info').style.display = 'none';
+            document.getElementById('scan-merge-plus').style.display = 'none';
+            document.getElementById('scan-merge-step2').style.display = 'none';
+            document.getElementById('scan-merge-more-info').style.display = 'none';
+            document.getElementById('scan-merge-preview').style.display = 'none';
+            document.getElementById('btn-scan-merge-confirm').style.display = 'none';
+            document.getElementById('scan-merge-result').innerHTML = '';
+            document.getElementById('scan-merge-less').focus();
+        };
+
     </script>
     <!-- 相機掃描 Modal -->
     <div id="camera-modal" class="camera-modal">
