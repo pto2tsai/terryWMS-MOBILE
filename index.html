@@ -1301,7 +1301,7 @@
                 
                 // 如果正在入庫頁面，自動刷新列表
                 if (document.getElementById('page-inbound').classList.contains('active')) {
-                    loadInboundTasks();
+                    window.loadInboundTasks();
                 }
             });
         }
@@ -1377,7 +1377,6 @@
         window.autoCheckTimer = null;
         window.lastInputLength = {};
         window.autoFormatAndCheck = function(input, type, callback) {
-            console.log('[autoFormatAndCheck] 開始, type:', type, 'value:', input.value);
             
             // 清除之前的計時器
             if (window.autoCheckTimer) {
@@ -1410,7 +1409,6 @@
             if (type === 'location') {
                 // 儲位格式: JC012 或 JC012F 或 J-C-01-2F
                 var clean = val.replace(/[^A-Z0-9]/g, '');
-                console.log('[autoFormatAndCheck] location clean:', clean, 'length:', clean.length);
                 
                 // 移除結尾的 F 來判斷
                 var checkVal = clean;
@@ -1421,12 +1419,10 @@
                 // 完整格式：至少5個字符（不含F），且最後是數字（樓層）
                 if (checkVal.length >= 5 && /[0-9]$/.test(checkVal)) {
                     shouldTrigger = true;
-                    console.log('[autoFormatAndCheck] 符合5碼規則 (checkVal:', checkVal, ')');
                 }
                 // 或者已經是標準格式
                 if (/^[A-Z]-[A-Z]-\d{2}-\d+F?$/i.test(val)) {
                     shouldTrigger = true;
-                    console.log('[autoFormatAndCheck] 符合標準格式');
                 }
             } else if (type === 'pallet') {
                 // 棧板格式: 通常是英數混合，6碼以上
@@ -1436,14 +1432,11 @@
                 }
             }
             
-            console.log('[autoFormatAndCheck] shouldTrigger:', shouldTrigger, 'callback:', !!callback);
             
             // 掃描器輸入立即觸發，手動輸入延遲 400ms
             if (shouldTrigger && callback) {
                 var delay = isScanner ? 50 : 400;
-                console.log('[autoFormatAndCheck] 將在', delay, 'ms 後觸發回調');
                 window.autoCheckTimer = setTimeout(function() {
-                    console.log('[autoFormatAndCheck] 觸發回調!');
                     callback();
                 }, delay);
             }
@@ -1474,50 +1467,124 @@
         let html5QrCode = null;
         let currentScanTarget = null;
         
-        function openCameraScanner(targetInputId) {
+        window.openCameraScanner = function(targetInputId) {
             currentScanTarget = targetInputId;
             document.getElementById('camera-modal').classList.add('active');
             
             html5QrCode = new Html5Qrcode("qr-reader");
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 150 } },
-                function(decodedText) {
-                    // 掃描成功
-                    if (currentScanTarget) {
-                        document.getElementById(currentScanTarget).value = decodedText.toUpperCase();
-                    }
-                    if (navigator.vibrate) navigator.vibrate(100);
-                    var target = currentScanTarget;
-                    stopCameraScanner();
-                    
-                    // 自動觸發確認
-                    setTimeout(function() {
-                        if (target === 'inbound-pallet-scan') confirmInboundPallet();
-                        else if (target === 'inbound-location-scan') confirmInboundLocation();
-                        else if (target === 'picking-location-scan') confirmPickingLocation();
-                        else if (target === 'picking-pallet-scan') confirmPickingPallet();
-                        else if (target === 'picking-scan') confirmPickingScan();
-                        else if (target === 'dispatch-scan') confirmDispatchScan();
-                        else if (target === 'query-input') doInventoryQuery();
-                        else if (target === 'scan-in-location') scanInboundStep1();
-                        else if (target === 'scan-in-pallet') scanInboundStep2();
-                        else if (target === 'scan-out-pallet') scanOutboundStep1();
-                        else if (target === 'scan-move-pallet') scanMoveStep1();
-                        else if (target === 'scan-move-new-loc') scanMoveStep2();
-                        else if (target === 'scan-merge-less') scanMergeStep1();
-                        else if (target === 'scan-merge-more') scanMergeStep2();
-                    }, 100);
+            
+            // 優化掃描設定 - 支援遠距離掃描
+            var config = {
+                fps: 15,                              // 提高掃描頻率
+                qrbox: function(viewfinderWidth, viewfinderHeight) {
+                    // 動態計算掃描框大小 - 使用更大的掃描區域
+                    var minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                    var qrboxSize = Math.floor(minEdge * 0.85);  // 使用 85% 的可視區域
+                    return { width: qrboxSize, height: qrboxSize };
                 },
-                function(errorMessage) { /* 忽略掃描錯誤 */ }
-            ).catch(function(err) {
-                console.error('相機啟動失敗:', err);
-                alert('無法啟動相機，請確認已授予相機權限');
-                stopCameraScanner();
-            });
+                aspectRatio: 1.0,                     // 1:1 比例更適合 QR Code
+                disableFlip: false,                   // 允許鏡像
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true  // 使用原生條碼偵測（如果支援）
+                }
+            };
+            
+            // 嘗試使用高解析度相機
+            var cameraConfig = {
+                facingMode: "environment",
+                advanced: [
+                    { focusMode: "continuous" },      // 持續自動對焦
+                    { zoom: 1.0 }                     // 預設縮放
+                ]
+            };
+            
+            // 先嘗試取得高解析度
+            Html5Qrcode.getCameras().then(function(cameras) {
+                if (cameras && cameras.length > 0) {
+                    // 找後置相機
+                    var backCamera = cameras.find(function(c) {
+                        return c.label.toLowerCase().includes('back') || 
+                               c.label.toLowerCase().includes('rear') ||
+                               c.label.toLowerCase().includes('環境');
+                    }) || cameras[cameras.length - 1];  // 通常最後一個是後置
+                    
+                    html5QrCode.start(
+                        backCamera.id,
+                        config,
+                        function(decodedText) {
+                            // 掃描成功
+                            if (currentScanTarget) {
+                                document.getElementById(currentScanTarget).value = decodedText.toUpperCase();
+                            }
+                            if (navigator.vibrate) navigator.vibrate(100);
+                            var target = currentScanTarget;
+                            window.stopCameraScanner();
+                            
+                            // 自動觸發確認
+                            setTimeout(function() {
+                                if (target === 'inbound-pallet-scan') window.confirmInboundPallet();
+                                else if (target === 'inbound-location-scan') window.confirmInboundLocation();
+                                else if (target === 'picking-location-scan') window.confirmPickingLocation();
+                                else if (target === 'picking-pallet-scan') window.confirmPickingPallet();
+                                else if (target === 'picking-scan') window.confirmPickingScan();
+                                else if (target === 'dispatch-scan') window.confirmDispatchScan();
+                                else if (target === 'query-input') window.doInventoryQuery();
+                                else if (target === 'scan-in-location') window.scanInboundStep1();
+                                else if (target === 'scan-in-pallet') window.scanInboundStep2();
+                                else if (target === 'scan-out-pallet') window.scanOutboundStep1();
+                                else if (target === 'scan-move-pallet') window.scanMoveStep1();
+                                else if (target === 'scan-move-new-loc') window.scanMoveStep2();
+                                else if (target === 'scan-merge-less') window.scanMergeStep1();
+                                else if (target === 'scan-merge-more') window.scanMergeStep2();
+                            }, 100);
+                        },
+                        function(errorMessage) { /* 忽略掃描錯誤 */ }
+                    ).catch(fallbackStart);
+                } else {
+                    fallbackStart();
+                }
+            }).catch(fallbackStart);
+            
+            // 備用啟動方式
+            function fallbackStart(err) {
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    config,
+                    function(decodedText) {
+                        if (currentScanTarget) {
+                            document.getElementById(currentScanTarget).value = decodedText.toUpperCase();
+                        }
+                        if (navigator.vibrate) navigator.vibrate(100);
+                        var target = currentScanTarget;
+                        window.stopCameraScanner();
+                        
+                        setTimeout(function() {
+                            if (target === 'inbound-pallet-scan') window.confirmInboundPallet();
+                            else if (target === 'inbound-location-scan') window.confirmInboundLocation();
+                            else if (target === 'picking-location-scan') window.confirmPickingLocation();
+                            else if (target === 'picking-pallet-scan') window.confirmPickingPallet();
+                            else if (target === 'picking-scan') window.confirmPickingScan();
+                            else if (target === 'dispatch-scan') window.confirmDispatchScan();
+                            else if (target === 'query-input') window.doInventoryQuery();
+                            else if (target === 'scan-in-location') window.scanInboundStep1();
+                            else if (target === 'scan-in-pallet') window.scanInboundStep2();
+                            else if (target === 'scan-out-pallet') window.scanOutboundStep1();
+                            else if (target === 'scan-move-pallet') window.scanMoveStep1();
+                            else if (target === 'scan-move-new-loc') window.scanMoveStep2();
+                            else if (target === 'scan-merge-less') window.scanMergeStep1();
+                            else if (target === 'scan-merge-more') window.scanMergeStep2();
+                        }, 100);
+                    },
+                    function(errorMessage) { /* 忽略掃描錯誤 */ }
+                ).catch(function(err) {
+                    console.error('相機啟動失敗:', err);
+                    alert('無法啟動相機，請確認已授予相機權限');
+                    window.stopCameraScanner();
+                });
+            }
         }
         
-        function stopCameraScanner() {
+        window.stopCameraScanner = function() {
             document.getElementById('camera-modal').classList.remove('active');
             if (html5QrCode) {
                 html5QrCode.stop().then(function() {
@@ -1625,7 +1692,6 @@
         
         // 載入移板工單
         window.loadMoveOrders = function() {
-            console.log('[loadMoveOrders] dispatchOrders:', window.dispatchOrders);
             
             var orders = (window.dispatchOrders || []).filter(function(o) {
                 if (o.status === 'done') return false;
@@ -1647,7 +1713,6 @@
                 return hasMoveOp && !hasMergeOp;
             });
             
-            console.log('[loadMoveOrders] 篩選後工單數:', orders.length);
             
             var countEl = document.getElementById('move-orders-count');
             var listEl = document.getElementById('move-orders-list');
@@ -1682,7 +1747,6 @@
         
         // 載入併板工單
         window.loadMergeOrders = function() {
-            console.log('[loadMergeOrders] dispatchOrders:', window.dispatchOrders);
             
             var orders = (window.dispatchOrders || []).filter(function(o) {
                 if (o.status === 'done') return false;
@@ -1699,7 +1763,6 @@
                 return hasMergeOp;
             });
             
-            console.log('[loadMergeOrders] 篩選後工單數:', orders.length);
             
             var countEl = document.getElementById('merge-orders-count');
             var listEl = document.getElementById('merge-orders-list');
@@ -1844,18 +1907,18 @@
         };
         
         // 頁面切換
-        function openPage(page) {
+        window.openPage = function(page) {
             document.getElementById('app-main').classList.remove('active');
             document.getElementById('page-' + page).classList.add('active');
             
-            if (page === 'picking') loadPickingWaves();
-            if (page === 'inbound') loadInboundTasks();
-            if (page === 'dispatch') loadDispatchOrders();
-            if (page === 'scan-move') loadMoveOrders();
-            if (page === 'scan-merge') loadMergeOrders();
+            if (page === 'picking') window.loadPickingWaves();
+            if (page === 'inbound') window.window.loadInboundTasks();
+            if (page === 'dispatch') window.loadDispatchOrders();
+            if (page === 'scan-move') window.loadMoveOrders();
+            if (page === 'scan-merge') window.loadMergeOrders();
         }
         
-        function goBack() {
+        window.goBack = function() {
             document.querySelectorAll('.func-page').forEach(p => p.classList.remove('active'));
             document.getElementById('app-main').classList.add('active');
         }
@@ -1864,7 +1927,7 @@
         let currentWave = null;
         let pickingItems = [];
         
-        function loadPickingWaves() {
+        window.loadPickingWaves = function() {
             const waves = window.waves || [];
             const select = document.getElementById('picking-wave-select');
             select.innerHTML = '<option value="">-- 請選擇 --</option>';
@@ -2237,7 +2300,7 @@
         
         // ========== 入庫任務 ==========
         
-        function loadInboundTasks() {
+        window.loadInboundTasks = function() {
             var tasks = (window.inboundTasks || []).filter(function(t) { return t.status !== 'done'; });
             
             var list = document.getElementById('inbound-list');
@@ -2274,12 +2337,10 @@
         
         // 點擊任務 - 直接進入掃描步驟（不用確認視窗）
         window.selectInboundTask = function(taskId) {
-            console.log('[selectInboundTask] 開始, taskId:', taskId);
             
             var task = (window.inboundTasks || []).find(function(t) { return t.id === taskId; });
             if (!task) { showToast('找不到任務'); return; }
             
-            console.log('[selectInboundTask] 找到任務:', task);
             
             // 檢查是否需要財務核准
             if (task.approvalStatus === 'pending') {
@@ -2289,7 +2350,6 @@
             
             // 直接設定任務並進入掃描步驟
             window.currentInboundTask = task;
-            console.log('[selectInboundTask] 設定 window.currentInboundTask:', window.currentInboundTask);
             
             // 顯示任務資訊
             document.getElementById('inbound-show-product').innerText = task.productName + (task.spec ? ' / ' + task.spec : '');
@@ -2364,13 +2424,13 @@
                 return;
             }
             
-            var scanned = formatPalletId(rawInput);
+            var scanned = window.formatPalletId(rawInput);
             
             // 查找任務（同時比對格式化前後的值）
             var task = (window.inboundTasks || []).find(function(t) {
                 if (t.status === 'done') return false;
-                var taskPallet = formatPalletId(t.palletId || '');
-                var taskOrder = formatPalletId(t.orderNo || '');
+                var taskPallet = window.formatPalletId(t.palletId || '');
+                var taskOrder = window.formatPalletId(t.orderNo || '');
                 return taskPallet === scanned || taskOrder === scanned || 
                        t.palletId === rawInput || t.orderNo === rawInput;
             });
@@ -2410,14 +2470,11 @@
         };
         
         window.confirmInboundLocation = async function() {
-            console.log('[confirmInboundLocation] 開始執行');
-            console.log('[confirmInboundLocation] currentInboundTask:', window.currentInboundTask);
             
             var input = document.getElementById('inbound-location-scan');
             var result = document.getElementById('inbound-scan-result');
             var rawInput = input.value.trim();
             
-            console.log('[confirmInboundLocation] rawInput:', rawInput);
             
             if (!rawInput) {
                 result.className = 'scan-result error';
@@ -2426,21 +2483,19 @@
             }
             
             if (!window.currentInboundTask) {
-                console.log('[confirmInboundLocation] 錯誤: currentInboundTask 為 null');
                 result.className = 'scan-result error';
                 result.innerText = '❌ 請先選擇入庫任務';
-                resetInboundStep();
+                window.resetInboundStep();
                 return;
             }
             
             // 格式化輸入的儲位
-            var scanned = formatLocationId(rawInput);
+            var scanned = window.formatLocationId(rawInput);
             var expected = (window.currentInboundTask.locationId || '').toUpperCase();
             
-            console.log('[confirmInboundLocation] scanned:', scanned, 'expected:', expected);
             
             // 同時比對格式化後和原始格式
-            if (scanned === expected || formatLocationId(expected) === scanned) {
+            if (scanned === expected || window.formatLocationId(expected) === scanned) {
                 // 儲位正確，完成入庫
                 try {
                     await window.updateDoc(window.doc(window.db, 'inboundTasks', window.currentInboundTask.id), {
@@ -2472,8 +2527,8 @@
                     showToast('✅ ' + window.currentInboundTask.productName + ' 入庫完成');
                     
                     // 自動重置並載入下一個任務
-                    resetInboundStep();
-                    loadInboundTasks();
+                    window.resetInboundStep();
+                    window.loadInboundTasks();
                     
                     // 檢查是否還有待辦任務
                     var remaining = (window.inboundTasks || []).filter(function(t) { 
@@ -2536,7 +2591,7 @@
                     result.className = 'scan-result success';
                     result.innerText = '✓ 入庫確認：' + task.productName + ' @ ' + task.locationId;
                     
-                    loadInboundTasks();
+                    window.loadInboundTasks();
                     if (navigator.vibrate) navigator.vibrate(100);
                 } catch (err) {
                     result.className = 'scan-result error';
@@ -2563,7 +2618,7 @@
         let currentDispatch = null;
         let dispatchItems = [];
         
-        function loadDispatchOrders() {
+        window.loadDispatchOrders = function() {
             const orders = (window.dispatchOrders || []).filter(o => o.status !== 'done');
             
             const select = document.getElementById('dispatch-order-select');
@@ -2908,7 +2963,7 @@
         window.scanInboundStep1 = function() {
             var rawLoc = document.getElementById('scan-in-location').value.trim();
             if (!rawLoc || rawLoc.length < 5) return; // 最少5碼如 IA011
-            var loc = formatLocationId(rawLoc);
+            var loc = window.formatLocationId(rawLoc);
             if (!loc || loc.length < 8) { showToast('儲位格式不正確'); return; }
             
             scanData.inbound.location = loc;
@@ -2923,7 +2978,7 @@
         window.scanInboundStep2 = async function() {
             var rawId = document.getElementById('scan-in-pallet').value.trim();
             if (!rawId) { showToast('請掃描插單'); return; }
-            var palletId = formatPalletId(rawId);
+            var palletId = window.formatPalletId(rawId);
             
             var loc = scanData.inbound.location;
             var result = document.getElementById('scan-in-result');
@@ -3041,7 +3096,7 @@
         window.scanOutboundStep1 = async function() {
             var rawId = document.getElementById('scan-out-pallet').value.trim();
             if (!rawId) { showToast('請掃描插單'); return; }
-            var palletId = formatPalletId(rawId);
+            var palletId = window.formatPalletId(rawId);
             
             var result = document.getElementById('scan-out-result');
             
@@ -3214,7 +3269,7 @@
         window.scanMoveStep1 = async function() {
             var rawId = document.getElementById('scan-move-pallet').value.trim();
             if (!rawId) { showToast('請掃描插單'); return; }
-            var palletId = formatPalletId(rawId);
+            var palletId = window.formatPalletId(rawId);
             
             var result = document.getElementById('scan-move-result');
             
@@ -3266,7 +3321,7 @@
         window.scanMoveStep2 = async function() {
             var rawLoc = document.getElementById('scan-move-new-loc').value.trim();
             if (!rawLoc) { showToast('請掃描新儲位'); return; }
-            var newLoc = formatLocationId(rawLoc);
+            var newLoc = window.formatLocationId(rawLoc);
             
             var pallet = scanData.move.pallet;
             var oldLoc = scanData.move.oldLoc;
@@ -3318,7 +3373,7 @@
         window.scanMergeStep1 = async function() {
             var rawId = document.getElementById('scan-merge-less').value.trim();
             if (!rawId) { showToast('請掃描插單'); return; }
-            var palletId = formatPalletId(rawId);
+            var palletId = window.formatPalletId(rawId);
             
             var result = document.getElementById('scan-merge-result');
             
@@ -3371,7 +3426,7 @@
         window.scanMergeStep2 = async function() {
             var rawId = document.getElementById('scan-merge-more').value.trim();
             if (!rawId) { showToast('請掃描插單'); return; }
-            var palletId = formatPalletId(rawId);
+            var palletId = window.formatPalletId(rawId);
             
             var result = document.getElementById('scan-merge-result');
             
