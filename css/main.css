@@ -1,0 +1,422 @@
+/* Terry WMS 手機版樣式 - 從單檔拆分 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* 登入頁 */
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+        }
+        .login-logo { font-size: 48px; color: #3b82f6; margin-bottom: 10px; }
+        .login-title { font-size: 28px; font-weight: bold; margin-bottom: 5px; }
+        .login-subtitle { color: #64748b; font-size: 14px; margin-bottom: 30px; }
+        .login-box {
+            width: 100%;
+            max-width: 320px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .login-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        .login-input:focus { outline: none; border-color: #3b82f6; }
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .login-btn:active { background: #2563eb; }
+        .login-error { color: #f87171; font-size: 14px; margin-bottom: 12px; display: none; }
+        
+        /* 主頁面 */
+        .app-container { display: none; min-height: 100vh; flex-direction: column; }
+        .app-container.active { display: flex; }
+        
+        /* 頂部 */
+        .app-header {
+            background: #1e293b;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #334155;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .app-logo { display: flex; align-items: center; gap: 8px; }
+        .app-logo i { color: #3b82f6; font-size: 20px; }
+        .app-logo span { font-weight: bold; font-size: 16px; }
+        .user-info { display: flex; align-items: center; gap: 8px; }
+        .user-name { font-size: 12px; color: #94a3b8; }
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.2);
+            border: none;
+            color: #f87171;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        
+        /* 主選單 */
+        .main-menu {
+            flex: 1;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .menu-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 1px solid #475569;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .menu-card:active {
+            transform: scale(0.98);
+        }
+        .menu-card.picking { border-color: #3b82f6; }
+        .menu-card.inbound { border-color: #10b981; }
+        .menu-card.dispatch { border-color: #f59e0b; }
+        .menu-card.query { border-color: #8b5cf6; }
+        
+        .menu-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .menu-card.picking .menu-icon { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .menu-card.inbound .menu-icon { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .menu-card.dispatch .menu-icon { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .menu-card.query .menu-icon { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
+        
+        .menu-text h3 { font-size: 18px; margin-bottom: 4px; }
+        .menu-text p { font-size: 13px; color: #94a3b8; }
+        .menu-arrow { margin-left: auto; color: #475569; font-size: 20px; }
+        .menu-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+        }
+        .menu-icon { position: relative; }
+        
+        /* 功能頁面 */
+        .func-page {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+            background: #0f172a;
+        }
+        .func-page.active { display: flex; }
+        
+        .func-header {
+            background: #1e293b;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #334155;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            padding: 8px;
+            cursor: pointer;
+        }
+        .func-title { font-size: 18px; font-weight: bold; }
+        
+        /* 掃描區 */
+        .scan-section {
+            background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+            padding: 20px 16px;
+            text-align: center;
+        }
+        .scan-input-wrap {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .scan-input {
+            flex: 1;
+            padding: 14px 16px;
+            background: #0f172a;
+            border: 2px solid #3b82f6;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 18px;
+            text-align: center;
+        }
+        .scan-input:focus { outline: none; border-color: #60a5fa; }
+        .scan-btn {
+            padding: 14px 20px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+        }
+        .scan-btn:active { background: #2563eb; }
+        .scan-hint { color: #64748b; font-size: 13px; }
+        /* 快捷數量按鈕 */
+        .qty-btn {
+            padding: 12px 8px;
+            background: #1e40af;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .qty-btn:active { background: #1d4ed8; transform: scale(0.95); }
+        
+        .scan-result {
+            margin-top: 12px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+        .scan-result.success { display: block; background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .scan-result.error { display: block; background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        
+        /* 清單區 */
+        .list-section {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .list-header h4 { font-size: 16px; color: #94a3b8; }
+        .list-progress { font-size: 14px; color: #10b981; font-weight: bold; }
+        
+        .list-item {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+        .list-item.completed { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .list-item.shortage { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        
+        .item-row { display: flex; justify-content: space-between; align-items: center; }
+        .item-location { font-size: 20px; font-weight: bold; color: #3b82f6; font-family: monospace; }
+        .item-status { font-size: 12px; padding: 4px 8px; border-radius: 6px; }
+        .item-status.pending { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .item-status.done { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .item-status.shortage { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        
+        .item-product { font-size: 15px; color: #fff; margin: 8px 0 4px; }
+        .item-detail { font-size: 13px; color: #64748b; }
+        .item-qty { font-size: 24px; font-weight: bold; color: #fbbf24; text-align: right; }
+        
+        /* 選擇器 */
+        .selector-section { padding: 16px; }
+        .selector-label { font-size: 14px; color: #94a3b8; margin-bottom: 8px; }
+        .selector-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+        }
+        
+        /* 庫存查詢結果 */
+        .query-result {
+            padding: 16px;
+        }
+        .result-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .result-product { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+        .result-spec { font-size: 14px; color: #64748b; margin-bottom: 12px; }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-top: 1px solid #334155;
+        }
+        .result-loc { font-family: monospace; color: #3b82f6; font-weight: bold; }
+        .result-qty { color: #fbbf24; font-weight: bold; }
+        
+        /* 底部操作 */
+        .bottom-actions {
+            padding: 16px;
+            background: #1e293b;
+            border-top: 1px solid #334155;
+        }
+        .action-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .action-btn:last-child { margin-bottom: 0; }
+        .action-btn.primary { background: #3b82f6; color: #fff; }
+        .action-btn.success { background: #10b981; color: #fff; }
+        .action-btn.secondary { background: #334155; color: #fff; }
+        .action-btn:active { opacity: 0.8; }
+        
+        /* 空狀態 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+        .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state p { font-size: 14px; }
+        
+        /* 載入中 */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+        .loading i { font-size: 32px; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* 隱藏 */
+        .hidden { display: none !important; }
+    
+        /* 相機掃描 */
+        .camera-btn {
+            padding: 14px 16px;
+            background: #10b981;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .camera-btn:active { background: #059669; }
+        .camera-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 9999;
+            flex-direction: column;
+        }
+        .camera-modal.active { display: flex; }
+        .camera-header {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+        }
+        .camera-header h3 { font-size: 18px; }
+        .camera-close {
+            background: #ef4444;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .camera-preview {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        #qr-reader {
+            width: 100%;
+            max-width: 400px;
+        }
+        #qr-reader video {
+            border-radius: 12px;
+        }
+        .camera-hint {
+            padding: 16px;
+            text-align: center;
+            color: #94a3b8;
+            background: #1e293b;
+        }
+    
+        /* 大字體模式 - 適合堆高機手 */
+        .scan-input { font-size: 20px !important; padding: 16px !important; }
+        .menu-card h3 { font-size: 20px !important; }
+        .func-title { font-size: 22px !important; }
+        /* 快捷數量按鈕 */
+        .qty-btn {
+            padding: 12px 8px;
+            background: #1e40af;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .qty-btn:active { background: #1d4ed8; transform: scale(0.95); }
+        
+        .scan-result { font-size: 16px !important; }
