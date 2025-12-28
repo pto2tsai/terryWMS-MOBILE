@@ -527,6 +527,17 @@
                 <i class="fa-solid fa-chevron-right menu-arrow"></i>
             </div>
             
+            <div class="menu-card" onclick="openPage('stocktake')" style="background:linear-gradient(135deg,#0369a1,#0ea5e9);">
+                <div class="menu-icon" style="background:rgba(255,255,255,0.2);color:white;">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                </div>
+                <div class="menu-text">
+                    <h3>庫存盤點</h3>
+                    <p>掃描盤點庫存</p>
+                </div>
+                <i class="fa-solid fa-chevron-right menu-arrow"></i>
+            </div>
+            
             <!-- 調度工單已整合到移板/併板功能中 -->
             
             <div class="menu-card query" onclick="openPage('query')">
@@ -823,6 +834,85 @@
             <button class="action-btn success" onclick="completeDispatchOrder()">
                 <i class="fa-solid fa-flag-checkered"></i> 完成工單
             </button>
+        </div>
+    </div>
+    
+    <!-- ========== 庫存盤點頁 ========== -->
+    <div id="page-stocktake" class="func-page">
+        <header class="func-header" style="background:linear-gradient(135deg,#0369a1,#0ea5e9);">
+            <button class="back-btn" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+            <span class="func-title">庫存盤點</span>
+        </header>
+        
+        <div class="scan-section">
+            <div style="text-align:center;color:#7dd3fc;font-size:13px;margin-bottom:16px;">
+                掃描儲位或棧板 → 確認/調整數量
+            </div>
+            
+            <!-- 掃描區 -->
+            <div id="st-scan-area">
+                <div style="background:rgba(14,165,233,0.15);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;">
+                    <div style="color:#0ea5e9;font-size:14px;margin-bottom:4px;">盤點模式</div>
+                    <div style="color:#7dd3fc;font-size:18px;font-weight:bold;">📋 掃描儲位或棧板</div>
+                </div>
+                <div class="scan-input-wrap">
+                    <input type="text" id="st-scan-input" class="scan-input" placeholder="掃描儲位或棧板編號" style="text-transform:uppercase;" 
+                           oninput="autoFormatAndCheck(this, 'auto', function(){ stScan(); })"
+                           onkeypress="if(event.keyCode==13){stScan();return false;}" autofocus>
+                    <button class="camera-btn" onclick="openCameraScanner('st-scan-input')"><i class="fa-solid fa-camera"></i></button>
+                </div>
+            </div>
+            
+            <!-- 盤點結果區 -->
+            <div id="st-result-area" style="display:none;">
+                <div style="background:rgba(14,165,233,0.2);border:1px solid #0ea5e9;border-radius:10px;padding:12px;margin-bottom:16px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span style="color:#7dd3fc;">儲位</span>
+                        <span id="st-info-loc" style="color:#0ea5e9;font-weight:bold;font-size:18px;">-</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span style="color:#7dd3fc;">品名</span>
+                        <span id="st-info-product" style="color:white;font-weight:bold;">-</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span style="color:#7dd3fc;">批號</span>
+                        <span id="st-info-lot" style="color:#94a3b8;">-</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;">
+                        <span style="color:#7dd3fc;">系統數量</span>
+                        <span id="st-info-sys-qty" style="color:#fbbf24;font-weight:bold;font-size:22px;">-</span>
+                    </div>
+                </div>
+                
+                <div style="background:rgba(251,191,36,0.1);border-radius:8px;padding:10px;margin-bottom:12px;text-align:center;">
+                    <span style="color:#fbbf24;font-weight:bold;">輸入實際盤點數量</span>
+                </div>
+                <div style="display:flex;gap:10px;margin-bottom:12px;">
+                    <input type="number" id="st-actual-qty" class="scan-input" style="flex:1;text-align:center;font-size:28px;font-weight:bold;" placeholder="0"
+                           onkeyup="if(event.keyCode===13) executeStocktake();">
+                    <button onclick="stSameQty()" style="padding:14px 20px;background:#22c55e;border:none;border-radius:10px;color:white;font-weight:bold;font-size:14px;">數量<br>相符</button>
+                </div>
+                <button onclick="executeStocktake()" style="width:100%;padding:16px;background:#0ea5e9;border:none;border-radius:10px;color:white;font-size:18px;font-weight:bold;">
+                    <i class="fa-solid fa-clipboard-check"></i> 確認盤點
+                </button>
+            </div>
+            
+            <div id="st-result" class="scan-result"></div>
+            
+            <button onclick="resetStocktake()" style="width:100%;padding:16px;background:#475569;border:none;border-radius:12px;color:white;margin-top:20px;font-size:16px;font-weight:bold;">
+                <i class="fa-solid fa-rotate-left"></i> 重新掃描
+            </button>
+        </div>
+        
+        <!-- 今日盤點記錄 -->
+        <div class="list-section" style="border-top:1px solid #334155;">
+            <div class="list-header">
+                <h4><i class="fa-solid fa-history mr-1 text-sky-400"></i>今日盤點記錄</h4>
+                <span class="list-progress" id="st-today-count">0 筆</span>
+            </div>
+            <div id="st-today-list">
+                <div style="text-align:center;color:#64748b;font-size:13px;padding:20px;">尚無盤點記錄</div>
+            </div>
         </div>
     </div>
     
@@ -1447,6 +1537,17 @@
                 if (clean.length >= 6) {
                     shouldTrigger = true;
                 }
+            } else if (type === 'auto') {
+                // 自動偵測：儲位或棧板皆可
+                var clean = val.replace(/[^A-Z0-9]/g, '');
+                // 儲位格式
+                if (clean.length >= 5 && /[0-9]$/.test(clean)) {
+                    shouldTrigger = true;
+                }
+                // 棧板格式
+                if (clean.length >= 6) {
+                    shouldTrigger = true;
+                }
             }
             
             // 掃描器輸入立即觸發（30ms），手動輸入延遲 400ms
@@ -1569,6 +1670,7 @@
                                 else if (target === 'scan-move-new-loc') window.scanMoveStep2();
                                 else if (target === 'scan-merge-less') window.scanMergeStep1();
                                 else if (target === 'scan-merge-more') window.scanMergeStep2();
+                                else if (target === 'st-scan-input') window.stScan();
                             }, 100);
                         },
                         function(errorMessage) { /* 忽略掃描錯誤 */ }
@@ -1606,6 +1708,7 @@
                             else if (target === 'scan-move-new-loc') window.scanMoveStep2();
                             else if (target === 'scan-merge-less') window.scanMergeStep1();
                             else if (target === 'scan-merge-more') window.scanMergeStep2();
+                            else if (target === 'st-scan-input') window.stScan();
                         }, 100);
                     },
                     function(errorMessage) { /* 忽略掃描錯誤 */ }
@@ -2831,6 +2934,147 @@
                     `).join('')}
                 </div>
             `).join('');
+        };
+        
+        // ========== 庫存盤點 ==========
+        window._stData = { pallet: null, todayRecords: [] };
+        
+        window.stScan = function() {
+            var input = document.getElementById('st-scan-input');
+            var code = input.value.trim().toUpperCase();
+            if (!code) return;
+            
+            // 判斷是儲位還是棧板
+            var pallet = null;
+            
+            // 先嘗試用棧板編號查找
+            pallet = window.pallets.find(function(p) { return p.palletId === code; });
+            
+            // 如果找不到，嘗試用儲位查找（取第一個）
+            if (!pallet) {
+                pallet = window.pallets.find(function(p) { return p.locationId === code; });
+            }
+            
+            if (!pallet) {
+                showStResult('error', '❌ 找不到此棧板或儲位');
+                vibrateError();
+                return;
+            }
+            
+            window._stData.pallet = pallet;
+            document.getElementById('st-info-loc').textContent = pallet.locationId;
+            document.getElementById('st-info-product').textContent = pallet.productName;
+            document.getElementById('st-info-lot').textContent = pallet.batchNo || '-';
+            document.getElementById('st-info-sys-qty').textContent = pallet.quantity;
+            document.getElementById('st-actual-qty').value = '';
+            
+            document.getElementById('st-scan-area').style.display = 'none';
+            document.getElementById('st-result-area').style.display = 'block';
+            document.getElementById('st-actual-qty').focus();
+            vibrateSuccess();
+        };
+        
+        window.stSameQty = function() {
+            if (window._stData.pallet) {
+                document.getElementById('st-actual-qty').value = window._stData.pallet.quantity;
+            }
+        };
+        
+        window.executeStocktake = async function() {
+            var actualQty = parseInt(document.getElementById('st-actual-qty').value);
+            var pallet = window._stData.pallet;
+            
+            if (!pallet) {
+                showStResult('error', '❌ 請先掃描棧板');
+                return;
+            }
+            if (isNaN(actualQty) || actualQty < 0) {
+                showStResult('error', '❌ 請輸入正確數量');
+                return;
+            }
+            
+            var diff = actualQty - pallet.quantity;
+            var diffText = diff === 0 ? '相符' : (diff > 0 ? '+' + diff : diff);
+            
+            try {
+                var docRef = doc(db, 'pallets', pallet.id);
+                
+                if (actualQty === 0) {
+                    await deleteDoc(docRef);
+                } else if (actualQty !== pallet.quantity) {
+                    await updateDoc(docRef, { quantity: actualQty });
+                }
+                
+                // 記錄盤點
+                await addDoc(collection(db, 'inventoryLogs'), {
+                    type: '庫存盤點',
+                    productName: pallet.productName,
+                    palletId: pallet.palletId,
+                    locationId: pallet.locationId,
+                    quantity: diff,
+                    beforeQty: pallet.quantity,
+                    afterQty: actualQty,
+                    operator: window.currentUser?.name || '手機用戶',
+                    timestamp: serverTimestamp()
+                });
+                
+                // 加入今日記錄
+                window._stData.todayRecords.unshift({
+                    time: new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'}),
+                    product: pallet.productName,
+                    loc: pallet.locationId,
+                    diff: diffText
+                });
+                renderStTodayList();
+                
+                showStResult('success', '✅ 盤點完成！差異：' + diffText);
+                vibrateSuccess();
+                
+                setTimeout(function() { resetStocktake(); }, 1500);
+            } catch (err) {
+                showStResult('error', '❌ 盤點失敗：' + err.message);
+                vibrateError();
+            }
+        };
+        
+        window.showStResult = function(type, msg) {
+            var el = document.getElementById('st-result');
+            el.className = 'scan-result ' + type;
+            el.textContent = msg;
+            el.style.display = 'block';
+        };
+        
+        window.resetStocktake = function() {
+            window._stData.pallet = null;
+            document.getElementById('st-scan-area').style.display = 'block';
+            document.getElementById('st-result-area').style.display = 'none';
+            document.getElementById('st-scan-input').value = '';
+            document.getElementById('st-result').style.display = 'none';
+            document.getElementById('st-scan-input').focus();
+        };
+        
+        window.renderStTodayList = function() {
+            var list = window._stData.todayRecords;
+            var container = document.getElementById('st-today-list');
+            var countEl = document.getElementById('st-today-count');
+            
+            countEl.textContent = list.length + ' 筆';
+            
+            if (list.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#64748b;font-size:13px;padding:20px;">尚無盤點記錄</div>';
+                return;
+            }
+            
+            container.innerHTML = list.map(function(r) {
+                var diffColor = r.diff === '相符' ? '#22c55e' : '#fbbf24';
+                return '<div style="background:#1e293b;border-radius:8px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">' +
+                    '<div>' +
+                        '<div style="color:white;font-weight:bold;">' + r.product + '</div>' +
+                        '<div style="color:#64748b;font-size:12px;">' + r.loc + ' · ' + r.time + '</div>' +
+                    '</div>' +
+                    '<div style="color:' + diffColor + ';font-weight:bold;">' + r.diff + '</div>' +
+                '</div>';
+            }).join('');
         };
         
         // Enter 鍵觸發
